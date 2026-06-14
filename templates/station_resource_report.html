@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Station Resource Report</title>
+  <style>
+    :root {
+      --bg: #111a36;
+      --panel: rgba(23, 33, 63, 0.88);
+      --panel-strong: rgba(28, 43, 79, 0.96);
+      --text: #f3f6fb;
+      --muted: rgba(255,255,255,0.45);
+      --line: rgba(255,255,255,0.1);
+      --orange: #ff9800;
+      --blue: #3b82f6;
+      --green: #22c55e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #0f1830 0%, #142046 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .shell {
+      width: min(92vw, 980px);
+      margin: 18px auto;
+      padding: 24px 26px 30px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(12,21,44,0.96), rgba(15,28,56,0.96));
+      box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+      position: relative;
+      overflow: hidden;
+    }
+    .close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      font-size: 2rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .header { padding-right: 70px; }
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0;
+      color: var(--orange);
+      font-size: clamp(1.6rem, 2.8vw, 2.5rem);
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .subtitle { margin: 8px 0 18px; color: var(--muted); font-size: 1.05rem; }
+    .divider { height: 1px; background: var(--line); margin: 18px 0 24px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .stat {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 16px 14px 14px;
+      border-top: 3px solid var(--blue);
+      text-align: center;
+      min-height: 82px;
+    }
+    .stat:nth-child(2) { border-top-color: #f97316; }
+    .stat:nth-child(3) { border-top-color: var(--green); }
+    .stat .k { color: rgba(255,255,255,0.55); font-size: 0.82rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.02em; }
+    .stat .v { margin-top: 6px; font-size: 1.9rem; font-weight: 900; line-height: 1.1; }
+    .stat .sub { margin-top: 4px; color: rgba(255,255,255,0.55); font-size: 0.8rem; }
+    .unit-card {
+      background: rgba(42, 61, 101, 0.72);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 14px 16px 16px;
+      margin-bottom: 14px;
+    }
+    .unit-name { font-size: 1.35rem; font-weight: 900; margin: 0 0 8px; }
+    .section-label { color: rgba(255,255,255,0.5); font-size: 0.95rem; margin: 8px 0 8px; }
+    .equipment-item { color: #000; font-weight: 800; margin: 4px 0; }
+    .inventory-title { color: rgba(255,255,255,0.55); font-size: 1rem; margin: 10px 0 6px; }
+    .inventory-line { font-size: 1rem; margin: 4px 0; }
+    .green { color: #58d36e; font-weight: 800; }
+    .muted { color: rgba(255,255,255,0.35); }
+    .empty { padding: 16px; color: var(--muted); text-align: center; }
+    .alert-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+    }
+    .alert-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .alert-box {
+      background: rgba(0,0,0,0.15);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .alert-box .l { color: rgba(255,255,255,0.45); font-size: 0.72rem; text-transform: uppercase; }
+    .alert-box .x { margin-top: 4px; font-size: 1.05rem; font-weight: 900; }
+    .policy {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255, 152, 0, 0.08);
+      border: 1px solid rgba(255, 152, 0, 0.22);
+      color: #ffd58a;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+    .dispatch-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .dispatch-row:first-of-type { border-top: 0; padding-top: 0; }
+    .dispatch-meta { color: rgba(255,255,255,0.62); font-size: 0.92rem; }
+    .eta-chip {
+      min-width: 92px;
+      text-align: center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      font-weight: 900;
+    }
+    @media (max-width: 900px) {
+      .stats, .alert-grid { grid-template-columns: 1fr; }
+      .header { padding-right: 0; }
+      .close { position: static; margin-bottom: 10px; float: right; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <button class="close" onclick="window.history.back()">×</button>
+    <div class="header">
+      <h1 class="title">🚒 STATION RESOURCE REPORT</h1>
+      <div class="subtitle">Post-dispatch inventory status</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="k">Area Type</div>
+        <div class="v">{{ area_type|upper }}</div>
+      </div>
+      <div class="stat">
+        <div class="k">Units Dispatched</div>
+        <div class="v">{{ dispatch_count or 0 }}</div>
+        <div class="sub">{{ dispatch_count or 0 }} unit{{ 's' if (dispatch_count or 0) != 1 else '' }} selected</div>
+      </div>
+      <div class="stat">
+        <div class="k">Arrival Window</div>
+        <div class="v">{{ latest_eta|round(1) }} MIN</div>
+        <div class="sub">First unit in {{ earliest_eta|round(1) }} min</div>
+      </div>
+    </div>
+
+    <div class="alert-card">
+      <div class="unit-name" style="margin-bottom:10px;">Alert #{{ alert.id }} - {{ alert.title }}</div>
+      <div class="alert-grid">
+        <div class="alert-box"><div class="l">Severity</div><div class="x">{{ alert.severity|upper }}</div></div>
+        <div class="alert-box"><div class="l">Zone</div><div class="x">{{ zone.name if zone else 'UNKNOWN' }}</div></div>
+        <div class="alert-box"><div class="l">Status</div><div class="x">{{ alert.status|upper }}</div></div>
+        <div class="alert-box"><div class="l">Domino</div><div class="x">{{ alert.domino_risk|upper if alert.domino_risk else 'N/A' }}</div></div>
+      </div>
+      <div class="policy">
+        Dispatch rule: small fire = only {{ expected_units }} same-color unit{{ 's' if expected_units != 1 else '' }}.
+        Large fire = all same-color units respond.
+        Current mobilization: {{ mobilization_policy }}.
+      </div>
+    </div>
+
+    {% if inventory %}
+      {% for unit in inventory %}
+        <div class="unit-card">
+          <div class="unit-name">{{ unit.unit_name }}</div>
+          <div class="section-label">Dispatched Equipment ({{ unit.dispatch_count }}):</div>
+          {% if unit.dispatched_types %}
+            {% for item_type in unit.dispatched_types %}
+              <div class="equipment-item">{{ item_type }}</div>
+            {% endfor %}
+          {% else %}
+            <div class="muted">No dispatched equipment</div>
+          {% endif %}
+
+          <div class="inventory-title">Remaining Base Inventory ({{ unit.total_items }} total items available):</div>
+          <div class="inventory-line">
+            Véhicules (Trucks): <span class="green">{{ unit.truck_like }} Left</span>
+            <span class="muted">(out of {{ unit.total_items }})</span>
+          </div>
+          <div class="inventory-line">
+            Équipements (Tools): <span class="green">{{ unit.tool_like }} Left</span>
+            <span class="muted">(out of {{ unit.total_items }})</span>
+          </div>
+          {% if unit.dispatch_count %}
+            <div class="section-label" style="margin-top:12px;">Arrival details</div>
+            {% for dispatch in dispatches if dispatch.unit_id == unit.unit_id %}
+              <div class="dispatch-row">
+                <div>
+                  <div style="font-weight:800;">{{ dispatch.equipment_type }} - {{ dispatch.equipment_code }}</div>
+                  <div class="dispatch-meta">{{ dispatch.distance_km|round(2) }} km from incident</div>
+                </div>
+                <div class="eta-chip">{{ dispatch.eta_minutes|round(1) }} min</div>
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">No station inventory available.</div>
+    {% endif %}
+  </div>
+</body>
+</html>

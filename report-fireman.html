@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport Statut Pompiers</title>
+    <style>
+        :root {
+            --accent: #be123c;
+            --accent-soft: #fff1f2;
+            --accent-strong: #9f1239;
+            --ink: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --panel: #f8fafc;
+            --panel-strong: #ffffff;
+            --ok: #15803d;
+            --warn: #c2410c;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(190, 18, 60, 0.06), transparent 26%),
+                radial-gradient(circle at bottom right, rgba(244, 63, 94, 0.05), transparent 28%),
+                #ffffff;
+            line-height: 1.45;
+        }
+        .print-btn {
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .sheet {
+            max-width: 1200px;
+            margin: 0 auto;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.94);
+            box-shadow: 0 18px 48px rgba(17, 24, 39, 0.08);
+        }
+        .head {
+            padding: 18px 22px;
+            border-bottom: 3px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            background: linear-gradient(180deg, #ffffff 0%, #fff7f8 100%);
+        }
+        .brand {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: -0.02em;
+        }
+        .meta {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+        .head-right {
+            text-align: right;
+            font-size: 13px;
+        }
+        .content { padding: 18px 22px 22px; }
+        .info-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 0 0 16px;
+        }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: var(--panel);
+            color: #1f2937;
+            border: 1px solid var(--line);
+        }
+        .chip-accent {
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+            border-color: #fecdd3;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .summary-card {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+        .summary-label {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        .summary-value {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .section { margin-top: 18px; }
+        .section-title {
+            margin: 0 0 8px;
+            font-size: 14px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #1f2937;
+            font-weight: 700;
+        }
+        .section-text {
+            margin: 0 0 10px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            font-size: 13px;
+            vertical-align: top;
+        }
+        th {
+            font-weight: 600;
+            background: #111827;
+            color: #ffffff;
+        }
+        tbody tr:nth-child(even) td {
+            background: #fafafa;
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        .status-working { color: var(--ok); font-weight: 700; }
+        .status-off { color: var(--warn); font-weight: 700; }
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .tag-working { background: #dcfce7; color: var(--ok); }
+        .tag-off { background: #ffedd5; color: var(--warn); }
+        .note-box {
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--accent);
+            border-radius: 10px;
+            padding: 12px 14px;
+            background: var(--accent-soft);
+            margin-bottom: 14px;
+            font-size: 13px;
+            color: #7f1d1d;
+        }
+        .signature {
+            margin-top: 40px;
+            text-align: right;
+        }
+        .signature-line {
+            width: 220px;
+            height: 70px;
+            border-bottom: 1px dashed #cbd5e1;
+            display: inline-block;
+        }
+        @media (max-width: 980px) {
+            body { padding: 16px; }
+            .head { flex-direction: column; }
+            .head-right { text-align: left; }
+            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 640px) {
+            .summary-grid { grid-template-columns: 1fr; }
+        }
+        @media print {
+            .print-btn { display: none; }
+            body { padding: 0; }
+            .sheet { border: none; border-radius: 0; }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">Imprimer / Sauvegarder en PDF</button>
+    <div class="sheet">
+        <div class="head">
+            <div>
+                <h1 class="brand">FireSafe - Rapport Statut Pompiers</h1>
+                <div class="meta">Rapport généré le : {{ date }}</div>
+                <div class="meta">Document officiel de suivi des ressources humaines et véhicules</div>
+            </div>
+            <div class="head-right">
+                <div><strong>Administrateur :</strong> {{ admin_email }}</div>
+                <div class="meta">Unité de coordination</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="info-strip">
+                <span class="chip chip-accent">Rapport PDF prêt à imprimer</span>
+                <span class="chip">Statut des équipes et des véhicules</span>
+                <span class="chip">Vue synthétique pour supervision</span>
+            </div>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-label">Pompiers total</div>
+                    <div class="summary-value">{{ firemen|length }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Pompiers en service</div>
+                    <div class="summary-value">{{ firemen | selectattr('status', 'equalto', 'working') | list | length }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Véhicules à traiter</div>
+                    <div class="summary-value">{{ open_vehicles|length }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Pompiers hors service</div>
+                    <div class="summary-value">{{ off_firemen|length }}</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3 class="section-title">Tableau 1: Statut pompiers</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Email</th>
+                            <th>Rôle</th>
+                            <th>Statut</th>
+                            <th>Dernière connexion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in firemen %}
+                        <tr>
+                            <td>{{ u.name or 'Inconnu' }}</td>
+                            <td>{{ u.email }}</td>
+                            <td style="text-transform: capitalize;">{{ u.role }}</td>
+                            <td>
+                                {% if u.status == 'working' %}
+                                    <span class="tag tag-working">En service</span>
+                                {% else %}
+                                    <span class="tag tag-off">Hors service</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ u.last_login[:16] if u.last_login else 'Jamais' }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not firemen %}
+                        <tr><td colspan="5" style="text-align:center;">Aucun pompier trouvé.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h3 class="section-title">Tableau 2: Véhicules et recommandations</h3>
+                <p class="section-text">Liste des véhicules qui nécessitent un remplacement de personnel.</p>
+                <div class="note-box">
+                    Suggestion de contact prioritaire: utiliser le premier pompier hors service disponible pour la prise en charge.
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code véhicule</th>
+                            <th>Type</th>
+                            <th>Unité (Caserne)</th>
+                            <th>Statut</th>
+                            <th>Action recommandée</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set contact = off_firemen | first %}
+                        {% for v in open_vehicles %}
+                        <tr>
+                            <td>{{ v.code }}</td>
+                            <td>{{ v.type }}</td>
+                            <td>{{ v.unit_name }}</td>
+                            <td><span class="status-off">{{ v.status | capitalize }}</span></td>
+                            <td>
+                                {% if contact %}
+                                    Contacter: {{ contact.name or contact.email }}
+                                {% else %}
+                                    Aucun pompier hors service disponible.
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not open_vehicles %}
+                        <tr><td colspan="5" style="text-align:center;">Tous les véhicules sont en ordre.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="signature">
+                <p>Signature (Chef d'unité)</p>
+                <div class="signature-line"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

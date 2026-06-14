@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Report an Emergency - FireSafe Portal</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #060507 !important;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        .client-container {
+            width: 95%;
+            margin: auto;
+            position: relative;
+            z-index: 5;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 24px;
+            background: rgba(13, 10, 15, 0.95);
+            overflow: hidden;
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(249, 212, 35, 0.2);
+            box-shadow:
+                0 0 20px rgba(249, 212, 35, 0.3),
+                0 0 40px rgba(255, 204, 51, 0.15),
+                0 60px 120px rgba(0, 0, 0, 0.8);
+            animation: fire-flicker-container 1.2s ease-in-out infinite alternate;
+        }
+
+        /* Focused Flare Line at the top */
+        .client-container::before {
+            content: "";
+            position: absolute;
+            top: -1px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.8), 0 0 50px rgba(255, 255, 255, 0.4);
+            z-index: 10;
+        }
+
+        /* Atmospheric Sunbeam / Skyline Glow */
+        .client-container::after {
+            content: "";
+            position: absolute;
+            top: -200px;
+            left: -50%;
+            right: -50%;
+            height: 600px;
+            background: radial-gradient(circle at 50% 0%, rgba(255, 245, 230, 0.22) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+            filter: blur(60px);
+        }
+
+        @keyframes fire-flicker-container {
+            0% {
+                box-shadow: 0 0 20px rgba(249, 212, 35, 0.4), 0 0 40px rgba(255, 204, 51, 0.2), 0 80px 150px rgba(0, 0, 0, 0.9);
+                border-color: rgba(249, 212, 35, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 0 45px rgba(249, 212, 35, 0.7), 0 0 90px rgba(255, 204, 51, 0.4), 0 80px 150px rgba(0, 0, 0, 0.9);
+                border-color: rgba(249, 212, 35, 0.4);
+            }
+        }
+
+        .client-container.login-mode {
+            max-width: 340px;
+            padding: 30px 25px;
+        }
+
+        .client-container.dashboard-mode {
+            max-width: 820px;
+            padding: 0;
+        }
+
+        .portal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .portal-layout {
+            display: flex;
+            flex-direction: row;
+            min-height: 340px;
+        }
+
+        .form-side {
+            flex: 1;
+            padding: 10px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .map-side {
+            flex: 1.2;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            color: #fff;
+            font-weight: 800;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.3rem;
+            text-shadow: 0 0 20px rgba(255, 106, 0, 0.3);
+        }
+
+        .client-form label {
+            display: block;
+            margin-top: 12px;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 700;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+        }
+
+        .client-form input,
+        .client-form select,
+        .client-form textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 106, 0, 0.1);
+            color: #fff;
+            padding: 12px 15px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        .client-form select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px top 50%;
+            background-size: 10px auto;
+        }
+
+        .client-form input:focus,
+        .client-form select:focus,
+        .client-form textarea:focus {
+            border-color: rgba(255, 106, 0, 0.6);
+            background: rgba(0, 0, 0, 0.6);
+            outline: none;
+        }
+
+        .upload-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            padding: 12px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            border-radius: 9px;
+            width: 100%;
+            transition: 0.25s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .upload-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .location-btn {
+            background: rgba(255, 106, 0, 0.08);
+            color: #ff9f43;
+            border: 1px solid rgba(255, 106, 0, 0.3);
+            cursor: pointer;
+            padding: 12px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            border-radius: 9px;
+            width: 100%;
+            transition: 0.25s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #ff4e50, #f9d423);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 800;
+            margin-top: 20px;
+            padding: 15px;
+            width: 100%;
+            border-radius: 12px;
+            transition: 0.4s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 8px 20px rgba(255, 78, 80, 0.3);
+            text-transform: uppercase;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(255, 78, 80, 0.6);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        #map {
+            width: 100%;
+            height: 260px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .user-nav-pill {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 8px 18px;
+            border-radius: 999px;
+        }
+
+        /* Notification Styles */
+        .notif-container { position: relative; }
+        .action-circle {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+        }
+        .action-circle:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-2px); }
+        .notif-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4e50;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 10px;
+            border: 2px solid #0d0a0f;
+            box-shadow: 0 0 10px rgba(255, 78, 80, 0.5);
+        }
+        .notif-panel {
+            position: absolute;
+            top: 55px;
+            right: 0;
+            width: 320px;
+            background: rgba(13, 10, 15, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            z-index: 1000;
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            display: none;
+        }
+        .notif-panel.active { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .notif-header {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .notif-header h3 { margin: 0; font-size: 0.9rem; letter-spacing: 1px; color: rgba(255,255,255,0.6); }
+        .notif-header button {
+            background: none; border: none; color: #ff4e50; font-size: 0.75rem; font-weight: 700; cursor: pointer;
+        }
+        .notif-list { max-height: 350px; overflow-y: auto; }
+        .notif-item {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            display: flex;
+            gap: 12px;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .notif-item:hover { background: rgba(255, 255, 255, 0.03); }
+        .notif-item.unread { border-left: 3px solid #ff4e50; background: rgba(255, 78, 80, 0.02); }
+        .notif-icon { font-size: 1.2rem; }
+        .notif-content { flex: 1; }
+        .notif-title { font-weight: 700; font-size: 0.85rem; color: #fff; margin-bottom: 3px; }
+        .notif-desc { font-size: 0.75rem; color: rgba(255,255,255,0.5); line-height: 1.4; }
+        .notif-time { font-size: 0.65rem; color: rgba(255,255,255,0.3); margin-top: 5px; }
+        .notif-empty { padding: 40px 20px; text-align: center; color: rgba(255,255,255,0.3); font-size: 0.85rem; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+
+<body>
+    <div class="client-container {% if session.get('user') %}dashboard-mode{% else %}login-mode{% endif %}">
+        {% if not session.get('user') %}
+        <!-- Login Mode (Image 3) -->
+        <div style="text-align: left; padding: 10px;">
+            <h2 style="font-size: 2.2rem; margin-bottom: 12px; font-weight: 800; color: #fff;">Emergency Portal</h2>
+            <p style="color: rgba(255,255,255,0.5); margin-bottom: 40px; font-size: 1.05rem; line-height: 1.5;">
+                Every second counts. Enter your details to instantly access the reporting map and tactical hub.
+            </p>
+
+            <form action="/login/local" method="POST" style="width: 100%;">
+                <label style="display: block; color: rgba(255,255,255,0.7); font-size: 0.85rem; margin-bottom: 10px; font-weight: 700; text-transform: uppercase;">Nom Complet *</label>
+                <div style="position: relative; margin-bottom: 20px;">
+                    <i class="fa-solid fa-user" style="position: absolute; left: 18px; top: 18px; color: rgba(255,255,255,0.3);"></i>
+                    <input type="text" name="name" required placeholder="Votre Nom"
+                        style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 18px; padding-left: 50px; border-radius: 14px; color: #fff; outline: none; transition: 0.3s;"
+                        onfocus="this.style.borderColor='rgba(255,106,0,0.5)'">
+                </div>
+
+                <label style="display: block; color: rgba(255,255,255,0.7); font-size: 0.85rem; margin-bottom: 10px; font-weight: 700; text-transform: uppercase;">Téléphone</label>
+                <div style="position: relative; margin-bottom: 20px;">
+                    <i class="fa-solid fa-phone" style="position: absolute; left: 18px; top: 18px; color: rgba(255,255,255,0.3);"></i>
+                    <input type="tel" name="phone" placeholder="0555 00 00 00"
+                        style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 18px; padding-left: 50px; border-radius: 14px; color: #fff; outline: none; transition: 0.3s;"
+                        onfocus="this.style.borderColor='rgba(255,106,0,0.5)'">
+                </div>
+
+                <label style="display: block; color: rgba(255,255,255,0.7); font-size: 0.85rem; margin-bottom: 10px; font-weight: 700; text-transform: uppercase;">Email Citoyen *</label>
+                <div style="position: relative; margin-bottom: 20px;">
+                    <i class="fa-solid fa-envelope" style="position: absolute; left: 18px; top: 18px; color: rgba(255,255,255,0.3);"></i>
+                    <input type="email" name="email" required placeholder="you@domain.com"
+                        style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 18px; padding-left: 50px; border-radius: 14px; color: #fff; outline: none; transition: 0.3s;"
+                        onfocus="this.style.borderColor='rgba(255,106,0,0.5)'">
+                </div>
+
+                <div
+                    style="color: #ff8c6b; font-size: 0.88rem; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; opacity: 0.8;">
+                    <i class="fa-solid fa-shield-halved"></i> No password required for identity verification.
+                </div>
+
+                <button type="submit" class="submit-btn" style="box-shadow: 0 15px 40px rgba(249, 212, 35, 0.25);">
+                    Proceed to Map &nbsp; <i class="fa-solid fa-satellite-dish"></i>
+                </button>
+            </form>
+
+            <div style="margin: 30px 0; text-align: center; position: relative;">
+                <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05);">
+                <span
+                    style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0d0a0f; padding: 0 20px; color: rgba(255,255,255,0.2); font-size: 0.75rem; font-weight: 900; letter-spacing: 2px;">SECURE
+                    GATEWAY</span>
+            </div>
+
+            <a href="/login"
+                style="display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #fff; text-decoration: none; font-weight: 700; font-size: 0.95rem; transition: 0.3s;"
+                onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.2)';"
+                onmouseout="this.style.background='transparent'; this.style.borderColor='rgba(255,255,255,0.1)';">
+                <img src="https://developers.google.com/identity/images/g-logo.png" style="width: 20px;"
+                    alt="Google Logo">
+                1-Click Google Sign In
+            </a>
+        </div>
+        {% else %}
+        <!-- Portal Mode (Image 4) -->
+        <div class="portal-header">
+            <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800;"><i class="fa-solid fa-fire-shield"
+                    style="color: #ff4e50;"></i> FireSafe Portal</h2>
+
+            <div style="display: flex; align-items: center; gap: 18px;">
+                <div class="notif-container">
+                    <button id="btn-notifications" class="action-circle">
+                        <i class="fa-solid fa-bell"></i>
+                        <span id="notif-badge" class="notif-badge hidden">0</span>
+                    </button>
+                    <div id="notif-panel" class="notif-panel">
+                        <div class="notif-header">
+                            <h3>TACTICAL ALERTS</h3>
+                            <button onclick="clearAllNotifications()">CLEAR</button>
+                        </div>
+                        <div id="notif-list" class="notif-list">
+                            <div class="notif-empty">📡 Scanning for updates...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="/logout" style="color: #ff4e50; font-size: 1.2rem; opacity: 0.7; transition: 0.3s;"
+                    onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
+                    <i class="fa-solid fa-power-off"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="portal-layout">
+            <div class="form-side">
+                <form id="reportForm" class="client-form" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label>Mission Description</label>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <input type="text" id="reporter_phone" required placeholder="Votre Numéro de Téléphone *" 
+                            value="{{ session.get('user', {}).get('phone', '') }}"
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-weight: bold;">
+                    </div>
+
+                    <textarea id="desc" rows="2" required
+                        placeholder="Describe the thermal intensity and situation..."></textarea>
+
+                    <div style="display: flex; gap: 15px;">
+                        <div style="flex: 1;">
+                            <label>Severity Level</label>
+                            <select id="severity">
+                                <option value="low">🟡 Low Risk</option>
+                                <option value="medium" selected>🟠 Medium Hazard</option>
+                                <option value="high">🔴 High Danger</option>
+                                <option value="critical">🚨 Critical Threat</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Fire Type</label>
+                            <select id="fire_type">
+                                <option value="Général" selected>🔥 Général</option>
+                                <option value="Forestier">🌲 Forestier</option>
+                                <option value="Industriel">🏭 Industriel</option>
+                                <option value="Résidentiel">🏠 Résidentiel</option>
+                                <option value="Véhicule">🚗 Véhicule</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <label style="margin-top: 5px;">Evidence (Photo/Video)</label>
+                    <button type="button" class="upload-btn" onclick="document.getElementById('file-upload').click()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload Media
+                    </button>
+                    <input type="file" id="file-upload" style="display: none;" accept="image/*,video/*">
+
+                    <button type="button" class="location-btn" id="locBtn">
+                        <i class="fa-solid fa-location-crosshairs"></i> Detect GPS Location
+                    </button>
+                    <div class="status" id="locStatus"
+                        style="font-size: 0.7rem; opacity: 0.6; font-family: monospace; margin-top: -2px;">[ CLICK MAP TO SELECT TARGET ]
+                    </div>
+
+                    <input type="hidden" id="lat">
+                    <input type="hidden" id="lng">
+
+                    <button type="submit" class="submit-btn" id="submitBtn" disabled>
+                        <i class="fa-solid fa-satellite"></i> SUBMIT MISSION
+                    </button>
+                    <div id="resStatus"
+                        style="text-align: center; margin-top: 15px; font-weight: 700; font-size: 0.85rem;"></div>
+                </form>
+            </div>
+
+            <div class="map-side">
+                <div id="map"></div>
+                <p
+                    style="text-align: center; color: rgba(255,255,255,0.2); font-size: 0.75rem; margin-top: 15px; letter-spacing: 1px; font-weight: 600;">
+                    <i class="fa-solid fa-earth-africa"></i> LIVE EMERGENCY DATA FEED
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Leaflet & Logic -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        // --- Duration Logic (Integrated) ---
+        function getDurationString(createdAt) {
+            if (!createdAt) return "N/A";
+            try {
+                const start = new Date(createdAt);
+                const now = new Date();
+                const diffMs = now - start;
+                const diffMins = Math.floor(diffMs / 60000);
+                if (diffMins < 1) return "Just now";
+                if (diffMins < 60) return `${diffMins}m`;
+                const hours = Math.floor(diffMins / 60);
+                const mins = diffMins % 60;
+                return `${hours}h ${mins}m`;
+            } catch (e) { return "Error"; }
+        }
+
+        const map = L.map("map", { zoomControl: false }).setView([36.166, 1.333], 12);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        let marker;
+        const alertLayer = L.layerGroup().addTo(map);
+
+        function setLocation(lat, lng) {
+            const latInp = document.getElementById("lat");
+            const lngInp = document.getElementById("lng");
+            const btn = document.getElementById("submitBtn");
+            if (latInp) latInp.value = lat;
+            if (lngInp) lngInp.value = lng;
+            if (btn) btn.disabled = false;
+
+            document.getElementById("locStatus").textContent = `TARGET LOCKED: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+            if (marker) marker.setLatLng([lat, lng]);
+            else marker = L.marker([lat, lng]).addTo(map);
+            map.flyTo([lat, lng], 14);
+        }
+
+        map.on("click", (e) => setLocation(e.latlng.lat, e.latlng.lng));
+
+        const locBtn = document.getElementById("locBtn");
+        if (locBtn) {
+            locBtn.addEventListener("click", () => {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => setLocation(pos.coords.latitude, pos.coords.longitude),
+                    () => { document.getElementById("locStatus").textContent = "GPS FAILED. MAP SELECTION REQUIRED."; }
+                );
+            });
+        }
+
+        async function fetchAlerts() {
+            try {
+                const res = await fetch("/api/alerts");
+                const alerts = await res.json();
+                alertLayer.clearLayers();
+                alerts.forEach(a => {
+                    if (a.status === 'resolved') return;
+                    const duration = getDurationString(a.created_at);
+
+                    const fireIcon = L.divIcon({
+                        className: '',
+                        html: `<div style="position:relative; width:40px; height:40px; display:flex; justify-content:center; align-items:center;">
+                                <div style="position:absolute; inset:0; background:radial-gradient(circle, rgba(255,71,87,0.4) 0%, transparent 70%); animation: pulse 2s infinite ease-in-out;"></div>
+                                <div style="font-size:2.2rem; filter:drop-shadow(0 0 8px #ff4757); animation: fire-flicker 0.8s ease-in-out infinite alternate;">🔥</div>
+                               </div>`,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 30]
+                    });
+
+                    L.marker([a.lat, a.lng], { icon: fireIcon }).bindPopup(`
+                        <div style="text-align:center; padding: 5px;">
+                            <b style="color:#ff4757; font-size:1.1rem;">🔥 Incident</b><br>
+                            <div style="margin: 8px 0; font-weight: 800; color:#aaa;">
+                                Active: <span style="color:#2ed573;">${duration}</span>
+                            </div>
+                            <div style="font-size:0.75rem; opacity:0.6;">Status: ${a.status.toUpperCase()}</div>
+                        </div>
+                    `).addTo(alertLayer);
+                });
+            } catch (err) { }
+        }
+
+        fetchAlerts();
+        setInterval(fetchAlerts, 15000);
+
+        const reportForm = document.getElementById("reportForm");
+        if (reportForm) {
+            reportForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const resStatus = document.getElementById("resStatus");
+                const submitBtn = document.getElementById("submitBtn");
+                
+                resStatus.innerHTML = "TRANSCEIVING MISSION DATA...";
+                resStatus.style.color = "#ff9f43";
+                submitBtn.disabled = true;
+
+                const formData = new FormData();
+                formData.append("title", "Citizen Report");
+                formData.append("description", document.getElementById("desc").value);
+                formData.append("severity", document.getElementById("severity").value);
+                formData.append("fire_type", document.getElementById("fire_type").value);
+                formData.append("lat", document.getElementById("lat").value);
+                formData.append("lng", document.getElementById("lng").value);
+                formData.append("reporter_phone", document.getElementById("reporter_phone").value || "");
+                
+                const fileInput = document.getElementById("file-upload");
+                if (fileInput.files.length > 0) {
+                    formData.append("file", fileInput.files[0]);
+                }
+
+                try {
+                    const res = await fetch("/api/alerts", {
+                        method: "POST",
+                        body: formData
+                    });
+                    
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        if (data.duplicate) {
+                            resStatus.style.color = "#ff9f43";
+                            resStatus.innerHTML = "DUPLICATE DETECTED. AGENTS ALREADY EN ROUTE.";
+                            submitBtn.disabled = false;
+                        } else {
+                            resStatus.style.color = "#2ed573";
+                            const alertId = data.alert ? data.alert.id : data.id;
+                            resStatus.innerHTML = `UPLINK SUCCESSFUL. <br><a href="/report/incident-pdf/${alertId}" target="_blank" style="color: #fff; text-decoration: underline;">VIEW YOUR INCIDENT REPORT</a>`;
+                            // Optional: location.reload() after 10s if they don't click
+                            setTimeout(() => location.reload(), 15000);
+                        }
+                    } else {
+                        resStatus.style.color = "#ff4e50";
+                        resStatus.innerHTML = data.error || "TRANSMISSION ERROR.";
+                        submitBtn.disabled = false;
+                    }
+                } catch (err) {
+                    resStatus.style.color = "#ff4e50";
+                    resStatus.innerHTML = "OFFLINE OR SERVER DOWN.";
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+    </script>
+    <script src="{{ url_for('static', filename='js/fire_particles.js') }}"></script>
+    <script>
+        // --- Client Notification Logic ---
+        const clientState = {
+            notifications: [],
+            cursor: 0,
+            userEmail: "{{ session.get('user', {}).get('email', '') }}"
+        };
+
+        const notifBtn = document.getElementById('btn-notifications');
+        const notifPanel = document.getElementById('notif-panel');
+
+        if (notifBtn) {
+            notifBtn.onclick = (e) => {
+                e.stopPropagation();
+                notifPanel.classList.toggle('active');
+                if (notifPanel.classList.contains('active')) {
+                    markAllRead();
+                }
+            };
+        }
+
+        window.onclick = () => notifPanel?.classList.remove('active');
+
+        async function pollClientNotifs() {
+            try {
+                const res = await fetch(`/api/notifications?since_id=${clientState.cursor}`);
+                const data = await res.json();
+                
+                if (data && data.length > 0) {
+                    clientState.cursor = data[0].id;
+                    
+                    // Filter notifications for this user (if they are a citizen)
+                    const myNotifs = data.filter(n => 
+                        n.message.includes(clientState.userEmail) || 
+                        n.title.includes("Dispatch") || 
+                        n.title.includes("Resolved")
+                    );
+
+                    myNotifs.forEach(n => {
+                        if (!clientState.notifications.some(existing => existing.id === n.id)) {
+                            clientState.notifications.unshift({
+                                ...n,
+                                unread: true,
+                                time: new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                            });
+                        }
+                    });
+
+                    renderNotifs();
+                }
+            } catch (err) { console.error("Notif error:", err); }
+        }
+
+        function renderNotifs() {
+            const list = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-badge');
+            const unread = clientState.notifications.filter(n => n.unread).length;
+
+            if (unread > 0) {
+                badge.textContent = unread;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            if (clientState.notifications.length === 0) {
+                list.innerHTML = `<div class="notif-empty">No tactical updates.</div>`;
+                return;
+            }
+
+            list.innerHTML = clientState.notifications.map(n => `
+                <div class="notif-item ${n.unread ? 'unread' : ''}" onclick="handleNotifClick(${n.id}, ${n.alert_id})">
+                    <div class="notif-icon">${n.type === 'critical' ? '🚨' : '🔥'}</div>
+                    <div class="notif-content">
+                        <div class="notif-title">${n.title}</div>
+                        <div class="notif-desc">${n.message}</div>
+                        <div class="notif-time">${n.time}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function handleNotifClick(id, alertId) {
+            const notif = clientState.notifications.find(n => n.id === id);
+            if (notif) notif.unread = false;
+            renderNotifs();
+            
+            if (alertId) {
+                // OPEN THE REPORT PAGE AS REQUESTED
+                window.open(`/report/incident-pdf/${alertId}`, '_blank');
+            }
+        }
+
+        function clearAllNotifications() {
+            clientState.notifications = [];
+            renderNotifs();
+        }
+
+        function markAllRead() {
+            clientState.notifications.forEach(n => n.unread = false);
+            renderNotifs();
+        }
+
+        if (clientState.userEmail) {
+            setInterval(pollClientNotifs, 10000);
+            pollClientNotifs();
+        }
+    </script>
+</body>
+
+</html>

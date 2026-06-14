@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unit Response Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #08111f;
+      --panel: rgba(14, 23, 40, 0.92);
+      --panel-2: rgba(24, 38, 64, 0.92);
+      --text: #e8eef7;
+      --muted: #93a4ba;
+      --line: rgba(255,255,255,0.08);
+      --accent: #ff9800;
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(255,152,0,0.12), transparent 32%),
+        radial-gradient(circle at right top, rgba(34,197,94,0.08), transparent 28%),
+        linear-gradient(135deg, #07101d 0%, #0b1730 55%, #06101b 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 28px 18px 40px; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
+      padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: rgba(8,17,31,0.75); backdrop-filter: blur(18px);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand .logo { font-size: 2rem; }
+    .brand h1 { margin: 0; font-size: 1.4rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+    .brand p { margin: 4px 0 0; color: var(--muted); }
+    .pill { padding: 10px 14px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.04); color: var(--muted); }
+    .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; margin-top: 18px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 18px; box-shadow: 0 18px 48px rgba(0,0,0,0.22); }
+    .hero { border-left: 5px solid var(--accent); }
+    .hero h2 { margin: 0 0 10px; font-size: 1.2rem; }
+    .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+    .meta .box { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+    .label { color: var(--muted); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+    .value { font-size: 1.15rem; font-weight: 800; }
+    .severity-low { color: #22c55e; }
+    .severity-medium { color: #fbbf24; }
+    .severity-high { color: #fb923c; }
+    .severity-critical { color: #ef4444; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { color: #bfd0e7; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    td { color: #eff4fb; }
+    .unit-row { background: rgba(255,255,255,0.03); }
+    .unit-name { font-weight: 800; }
+    .status-open { color: var(--bad); font-weight: 800; }
+    .status-dispatched { color: var(--good); font-weight: 800; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05); color: var(--text); text-decoration: none; font-weight: 700;
+    }
+    .btn.primary { background: linear-gradient(135deg, #ff9800, #ff6d00); color: #111827; border-color: transparent; }
+    .empty { padding: 24px; text-align: center; color: var(--muted); }
+    .dispatch-pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: rgba(34,197,94,0.14); color: #7bf0a6; border: 1px solid rgba(34,197,94,0.2); font-weight: 700; font-size: 0.78rem; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .meta { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">🚒</div>
+        <div>
+          <h1>Unit Response Center</h1>
+          <p>Dedicated page for the units assigned to this fire</p>
+        </div>
+      </div>
+      <div class="pill">Alert #{{ alert.id }}</div>
+    </div>
+
+    <div class="grid">
+      <div class="card hero">
+        <h2>Incident Overview</h2>
+        <div class="meta">
+          <div class="box">
+            <div class="label">Location</div>
+            <div class="value">{{ alert.lat }}, {{ alert.lng }}</div>
+          </div>
+          <div class="box">
+            <div class="label">Severity</div>
+            <div class="value severity-{{ alert.severity|lower }}">{{ alert.severity|upper }}</div>
+          </div>
+          <div class="box">
+            <div class="label">Zone</div>
+            <div class="value">{{ zone.name if zone else 'Unknown' }}</div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px; color:var(--muted); line-height:1.7;">
+          <div><strong style="color:#fff;">Title:</strong> {{ alert.title }}</div>
+          <div><strong style="color:#fff;">Status:</strong> <span class="status-{{ alert.status|lower }}">{{ alert.status|upper }}</span></div>
+          <div><strong style="color:#fff;">Domino Risk:</strong> {{ alert.domino_risk|upper if alert.domino_risk else 'N/A' }}</div>
+        </div>
+
+        <div class="actions">
+          <a class="btn primary" href="/fireman?panel=unit">Open Tactical Unit Panel</a>
+          <a class="btn" href="/dashboard">Back to Dashboard</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-top:0;">Dispatched Units</h2>
+        {% if dispatches %}
+          <table>
+            <thead>
+              <tr>
+                <th>Unit</th>
+                <th>Equipment</th>
+                <th>ETA</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in dispatches %}
+                <tr class="unit-row">
+                  <td>
+                    <div class="unit-name">{{ d.unit_name }}</div>
+                    <div style="color:var(--muted); font-size:0.82rem;">({{ d.unit_lat }}, {{ d.unit_lng }})</div>
+                  </td>
+                  <td>{{ d.equipment_type }} <span style="color:var(--muted);">{{ d.equipment_code }}</span></td>
+                  <td>{{ d.eta_minutes }} min</td>
+                  <td><span class="dispatch-pill">{{ d.status|upper }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="empty">
+            No dispatched units yet for this incident.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

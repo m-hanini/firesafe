@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport Hebdomadaire Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --accent: #be123c;
+            --ink: #111827;
+            --muted: #6b7280;
+            --line: #d1d5db;
+            --panel: #f8fafc;
+            --ok: #15803d;
+            --warn: #c2410c;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+            margin: 0;
+            padding: 28px;
+            color: var(--ink);
+            background: #ffffff;
+            line-height: 1.45;
+        }
+
+        .print-btn {
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .sheet {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .head {
+            padding: 18px 22px;
+            border-bottom: 3px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 0;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .head-right {
+            text-align: right;
+            font-size: 13px;
+        }
+
+        .content {
+            padding: 18px 22px 22px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .summary-card {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: var(--panel);
+        }
+
+        .summary-label {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .summary-value {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .section {
+            margin-top: 18px;
+        }
+
+        .section-title {
+            margin: 0 0 8px;
+            font-size: 14px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #1f2937;
+            font-weight: 700;
+        }
+
+        .chart-wrap {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #fff;
+            padding: 14px;
+            margin-top: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        th {
+            font-weight: 600;
+            background: #111827;
+            color: #ffffff;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .tag-critical { background: #fee2e2; color: #b91c1c; }
+        .tag-high { background: #ffedd5; color: #c2410c; }
+        .tag-medium { background: #fef3c7; color: #b45309; }
+        .tag-low { background: #dcfce7; color: #15803d; }
+
+        .status-open { color: #c2410c; font-weight: 700; }
+        .status-resolved { color: #15803d; font-weight: 700; }
+        .status-pending { color: #1d4ed8; font-weight: 700; }
+
+        .grid-two {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .note {
+            margin-top: 16px;
+            font-size: 12px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .quick-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .quick-link {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 8px 10px;
+            color: #1f2937;
+            text-decoration: none;
+            font-size: 12px;
+            background: var(--panel);
+        }
+
+        @media (max-width: 980px) {
+            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .grid-two { grid-template-columns: 1fr; }
+            .head { flex-direction: column; }
+            .head-right { text-align: left; }
+        }
+
+        @media print {
+            .print-btn { display: none; }
+            body { padding: 0; }
+            .sheet {
+                border: none;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">Imprimer / Sauvegarder en PDF</button>
+
+    <div class="sheet">
+        <div class="head">
+            <div>
+                <h1 class="brand">FireSafe - Rapport Hebdomadaire Admin</h1>
+                <div class="meta">Synthese globale des incidents et ressources</div>
+                <div class="meta">Periode: {{ week_start }} au {{ week_end }}</div>
+            </div>
+            <div class="head-right">
+                <div><strong>Genere le:</strong> {{ date }}</div>
+                <div><strong>Admin:</strong> {{ admin_email }}</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-label">Incidents cette semaine</div>
+                    <div class="summary-value">{{ incidents_week|length }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Alertes ouvertes globales</div>
+                    <div class="summary-value">{{ current_alerts.open_alerts or 0 }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Dispatches semaine</div>
+                    <div class="summary-value">{{ dispatch_summary.total_dispatches or 0 }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">ETA moyen semaine</div>
+                    <div class="summary-value">{{ '%.1f'|format(dispatch_summary.avg_eta or 0) }} min</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3 class="section-title">1. Histogramme des incendies hebdomadaires</h3>
+                <div class="chart-wrap">
+                    <canvas id="weeklyFiresChart" height="110"></canvas>
+                </div>
+            </div>
+
+            <div class="section grid-two">
+                <div>
+                    <h3 class="section-title">2. Repartition par severite</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Niveau</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><span class="tag tag-critical">CRITICAL</span></td><td>{{ severity_map.critical }}</td></tr>
+                            <tr><td><span class="tag tag-high">HIGH</span></td><td>{{ severity_map.high }}</td></tr>
+                            <tr><td><span class="tag tag-medium">MEDIUM</span></td><td>{{ severity_map.medium }}</td></tr>
+                            <tr><td><span class="tag tag-low">LOW</span></td><td>{{ severity_map.low }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h3 class="section-title">3. Statut des incidents semaine</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Statut</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="status-open">Open</td><td>{{ status_map.open }}</td></tr>
+                            <tr><td class="status-pending">Pending</td><td>{{ status_map.pending }}</td></tr>
+                            <tr><td class="status-resolved">Resolved</td><td>{{ status_map.resolved }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section grid-two">
+                <div>
+                    <h3 class="section-title">4. Situation personnel et equipement</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Indicateur</th>
+                                <th>Valeur</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Pompiers total</td><td>{{ fireman_summary.total_firemen or 0 }}</td></tr>
+                            <tr><td>Pompiers actifs (working)</td><td>{{ fireman_summary.active_firemen or 0 }}</td></tr>
+                            <tr><td>Equipements total</td><td>{{ equipment_summary.total_equipment or 0 }}</td></tr>
+                            <tr><td>Equipements non disponibles</td><td>{{ equipment_summary.busy_equipment or 0 }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h3 class="section-title">5. Liens rapports rapides</h3>
+                    <div class="quick-links">
+                        <a class="quick-link" href="/report/fireman-pdf" target="_blank">Rapport statut pompiers</a>
+                        {% if incidents_week %}
+                        <a class="quick-link" href="/report/incident-pdf/{{ incidents_week[0].id }}" target="_blank">Dernier rapport incident</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3 class="section-title">6. Journal incidents semaine</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Titre</th>
+                            <th>Severite</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                            <th>Rapport</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inc in incidents_week %}
+                        <tr>
+                            <td>#{{ inc.id }}</td>
+                            <td>{{ inc.title or 'Incident' }}</td>
+                            <td>
+                                {% set sev = (inc.severity or 'medium')|lower %}
+                                <span class="tag {% if sev == 'critical' %}tag-critical{% elif sev == 'high' %}tag-high{% elif sev == 'low' %}tag-low{% else %}tag-medium{% endif %}">
+                                    {{ sev|upper }}
+                                </span>
+                            </td>
+                            <td>
+                                {% set st = (inc.status or 'open')|lower %}
+                                <span class="{% if st == 'resolved' %}status-resolved{% elif st == 'pending' %}status-pending{% else %}status-open{% endif %}">
+                                    {{ st|upper }}
+                                </span>
+                            </td>
+                            <td>{{ inc.created_at }}</td>
+                            <td><a class="quick-link" href="/report/incident-pdf/{{ inc.id }}" target="_blank">PDF</a></td>
+                        </tr>
+                        {% endfor %}
+                        {% if not incidents_week %}
+                        <tr>
+                            <td colspan="6" style="text-align:center; color: var(--muted);">Aucun incident sur cette periode.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="note">Document interne - FireSafe Command Center</div>
+        </div>
+    </div>
+
+    <script id="chartData" type="application/json">
+        {
+            "labels": {{ chart_labels | tojson }},
+            "values": {{ chart_values | tojson }}
+        }
+    </script>
+    <script>
+        const chartData = JSON.parse(document.getElementById('chartData').textContent);
+        const labels = chartData.labels;
+        const values = chartData.values;
+        const ctx = document.getElementById('weeklyFiresChart');
+
+        if (ctx && typeof Chart !== 'undefined') {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Nombre de feux',
+                        data: values,
+                        borderWidth: 1,
+                        borderColor: '#9f1239',
+                        backgroundColor: '#e11d48cc'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

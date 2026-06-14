@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport d'Incident #{{ incident.id }}</title>
+    <style>
+        :root {
+            --accent: #e11d48;
+            --accent-strong: #be123c;
+            --accent-soft: #fff1f2;
+            --ink: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --panel: #f8fafc;
+            --panel-strong: #ffffff;
+            --critical: #dc2626;
+            --high: #ea580c;
+            --medium: #d97706;
+            --low: #16a34a;
+            --shadow: 0 18px 48px rgba(17, 24, 39, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(225, 29, 72, 0.07), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(244, 63, 94, 0.05), transparent 30%),
+                #ffffff;
+            line-height: 1.45;
+        }
+
+        .print-btn {
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+            color: white;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 20px rgba(225, 29, 72, 0.22);
+        }
+
+        .sheet {
+            max-width: 1240px;
+            margin: 0 auto;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: var(--shadow);
+        }
+
+        .head {
+            padding: 20px 24px;
+            border-bottom: 3px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            background: linear-gradient(180deg, #ffffff 0%, #fff7f8 100%);
+        }
+
+        .brand {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -0.02em;
+        }
+
+        .meta {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .head-right {
+            text-align: right;
+            font-size: 13px;
+        }
+
+        .content {
+            padding: 20px 24px 24px;
+        }
+
+        .info-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: var(--panel);
+            color: #1f2937;
+            border: 1px solid var(--line);
+        }
+
+        .chip-accent {
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+            border-color: #fecdd3;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .summary-card {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px 14px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .summary-label {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .section {
+            margin-top: 18px;
+        }
+
+        .section-title {
+            margin: 0 0 10px;
+            font-size: 14px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #1f2937;
+            font-weight: 800;
+        }
+
+        .section-text {
+            margin: -2px 0 10px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .hero-card {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            overflow: hidden;
+            background: #fff;
+            margin-bottom: 18px;
+        }
+
+        .hero-top {
+            display: grid;
+            grid-template-columns: 1.7fr 1fr;
+            gap: 0;
+        }
+
+        .hero-panel {
+            padding: 16px 18px;
+            border-right: 1px solid var(--line);
+        }
+
+        .hero-panel:last-child {
+            border-right: none;
+            background: var(--panel);
+        }
+
+        .hero-title {
+            margin: 0 0 8px;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--accent-strong);
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .metric {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .metric-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--muted);
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        .metric-value {
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .metric-note {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .severity-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        .severity-critical { background: var(--critical); }
+        .severity-high { background: var(--high); }
+        .severity-medium { background: var(--medium); }
+        .severity-low { background: var(--low); }
+
+        .callout {
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--accent);
+            border-radius: 12px;
+            padding: 12px 14px;
+            background: var(--accent-soft);
+            margin-bottom: 14px;
+            font-size: 13px;
+            color: #7f1d1d;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        th,
+        td {
+            padding: 11px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        th {
+            font-weight: 700;
+            background: #111827;
+            color: #ffffff;
+        }
+
+        tbody tr:nth-child(even) td {
+            background: #fafafa;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .small-table th {
+            width: 34%;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .tag-critical { background: #fee2e2; color: #b91c1c; }
+        .tag-high { background: #ffedd5; color: #c2410c; }
+        .tag-medium { background: #fef3c7; color: #b45309; }
+        .tag-low { background: #dcfce7; color: #15803d; }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .footer {
+            margin-top: 38px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .grid-two {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .subcard {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px;
+            background: #fff;
+        }
+
+        .dispatch-table td:last-child,
+        .dispatch-table th:last-child {
+            white-space: nowrap;
+        }
+
+        @media (max-width: 980px) {
+            body { padding: 16px; }
+            .head { flex-direction: column; }
+            .head-right { text-align: left; }
+            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .hero-top { grid-template-columns: 1fr; }
+            .hero-panel { border-right: none; border-bottom: 1px solid var(--line); }
+            .grid-two { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            .summary-grid { grid-template-columns: 1fr; }
+            .hero-grid { grid-template-columns: 1fr; }
+        }
+
+        @media print {
+            .print-btn { display: none; }
+            body { padding: 0; background: #fff; }
+            .sheet {
+                border: none;
+                border-radius: 0;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">Imprimer / Sauvegarder en PDF</button>
+
+    <div class="sheet">
+        <div class="head">
+            <div>
+                <h1 class="brand">FireSafe - Rapport d'Incident #{{ incident.id }}</h1>
+                <div class="meta">Généré le : {{ date }}</div>
+                <div class="meta">Rapport technique de situation et de déploiement</div>
+            </div>
+            <div class="head-right">
+                <div style="text-transform: uppercase; color: var(--muted); font-size: 11px; font-weight: 700; margin-bottom: 2px;">Rapporteur</div>
+                <div style="font-size: 18px; font-weight: 800; color: var(--ink); margin-bottom: 2px;">{{ incident.reporter_name or 'Anonyme' }}</div>
+                <div style="color: var(--muted); font-size: 13px;">
+                    {{ incident.reporter_email or 'guest@firesafe.dz' }}
+                </div>
+                <div style="color: #111827; font-size: 14px; font-weight: 800; margin-top: 4px;">
+                    {% if incident.reporter_phone %}📱 Tel: {{ incident.reporter_phone }}{% else %}📱 Tel: Non fourni{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="info-strip">
+                <span class="chip chip-accent">Rapport PDF prêt à imprimer</span>
+                <span class="chip">Incident #{{ incident.id }}</span>
+                <span class="chip">Sévérité: {{ incident.severity | upper }}</span>
+                <span class="chip">Type de feu: {{ fire_type }}</span>
+            </div>
+
+            <div class="hero-card">
+                <div class="hero-top">
+                    <div class="hero-panel">
+                        <h2 class="hero-title">Résumé de l'incident</h2>
+                        <div class="hero-grid">
+                            <div class="metric">
+                                <div class="metric-label">Type d'incendie estimé</div>
+                                <div class="metric-value">{{ 'Fort / Propagation rapide' if incident.severity in ['high', 'critical'] else 'Faible / Moyen' }}</div>
+                                <div class="metric-note">{{ fire_type }}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Zone / Environnement</div>
+                                <div class="metric-value">{{ zone.name if zone else 'Zone inconnue' }}</div>
+                                <div class="metric-note">{{ zone.hazard_type if zone else 'N/A' }}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Coordonnées</div>
+                                <div class="metric-value">{{ incident.lat }}, {{ incident.lng }}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Risque domino</div>
+                                <div class="metric-value">{{ zone.domino_threshold if zone else '30' }} min</div>
+                                <div class="metric-note">Avant perte de contrôle totale</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hero-panel">
+                        <h2 class="hero-title">Sévérité</h2>
+                        <div style="margin-bottom: 12px;">
+                            <span class="severity-badge {% if incident.severity == 'critical' %}severity-critical{% elif incident.severity == 'high' %}severity-high{% elif incident.severity == 'medium' %}severity-medium{% else %}severity-low{% endif %}">
+                                {{ incident.severity | upper }}
+                            </span>
+                        </div>
+                        <div class="metric" style="margin-bottom: 10px;">
+                            <div class="metric-label">Heure du signalement</div>
+                            <div class="metric-value">{{ incident.timestamp }}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Règle de priorité</div>
+                            <div class="metric-value">{{ 'Intervention immédiate' if incident.severity == 'critical' else 'Suivi renforcé' }}</div>
+                            <div class="metric-note">Pilotage dynamique selon le terrain</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3 class="section-title">Tableau 1: Données de l'incendie</h3>
+                <table class="small-table">
+                    <tbody>
+                        <tr>
+                            <th>Heure du signalement</th>
+                            <td>{{ incident.timestamp }}</td>
+                        </tr>
+                        <tr>
+                            <th>Intensité (Severity)</th>
+                            <td>
+                                <span class="tag {% if incident.severity == 'critical' %}tag-critical{% elif incident.severity == 'high' %}tag-high{% elif incident.severity == 'medium' %}tag-medium{% else %}tag-low{% endif %}">
+                                    {{ incident.severity | upper }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Type d'incendie estimé</th>
+                            <td>{{ 'Fort / Propagation rapide' if incident.severity in ['high', 'critical'] else 'Faible / Moyen' }} - {{ fire_type }}</td>
+                        </tr>
+                        <tr>
+                            <th>Zone / Environnement</th>
+                            <td>{{ zone.name if zone else 'Zone Inconnue' }} ({{ zone.hazard_type if zone else 'N/A' }})</td>
+                        </tr>
+                        <tr>
+                            <th>Coordonnées</th>
+                            <td>{{ incident.lat }}, {{ incident.lng }}</td>
+                        </tr>
+                        <tr>
+                            <th>Risque Domino</th>
+                            <td>{{ zone.domino_threshold if zone else '30' }} minutes avant perte de contrôle totale</td>
+                        </tr>
+                        <tr style="border-top: 2px solid var(--accent-strong);">
+                            <th style="color: var(--accent-strong);">Rapporteur (Citoyen)</th>
+                            <td>
+                                <div style="text-transform: uppercase; color: var(--muted); font-size: 10px; font-weight: 700; margin-bottom: 2px;">Rapporteur</div>
+                                <div style="font-size: 16px; font-weight: 800; color: #111827;">{{ incident.reporter_name or 'Anonyme' }}</div>
+                                <div style="color: #4b5563; font-size: 13px;">
+                                    {{ incident.reporter_email }}
+                                    {% if incident.reporter_phone %} • Tel: {{ incident.reporter_phone }}{% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% if incident.description %}
+                        <tr>
+                            <th>Description de l'incident</th>
+                            <td style="font-style: italic; color: #374151;">
+                                "{{ incident.description }}"
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if incident.image_url %}
+            <div class="section">
+                <h3 class="section-title">Preuve Visuelle & Type de Feu</h3>
+                <div class="subcard" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; background: var(--panel);">
+                    <div style="flex: 1; min-width: 300px; max-width: 500px;">
+                        {% set ext = incident.image_url.split('.')[-1].lower() %}
+                        {% if ext in ['mp4', 'webm', 'ogg', 'mov'] %}
+                        <video controls style="width: 100%; border-radius: 12px; border: 1px solid var(--line); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            <source src="{{ incident.image_url }}" type="video/{{ ext if ext != 'mov' else 'quicktime' }}">
+                            Your browser does not support the video tag.
+                        </video>
+                        {% else %}
+                        <img src="{{ incident.image_url }}" alt="Preuve Incident" style="width: 100%; border-radius: 12px; border: 1px solid var(--line); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        {% endif %}
+                    </div>
+                    
+                    <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 15px;">
+                        <div style="padding: 15px; background: white; border-radius: 12px; border-left: 5px solid var(--accent);">
+                            <strong style="display: block; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; margin-bottom: 5px;">Type de l'Incendie</strong>
+                            <div style="font-size: 1.3rem; font-weight: 800; color: var(--ink);">
+                                {% if fire_type == 'Forestier' %}🌲 Forestier
+                                {% elif fire_type == 'Industriel' %}🏭 Industriel
+                                {% elif fire_type == 'Résidentiel' %}🏠 Résidentiel
+                                {% elif fire_type == 'Véhicule' %}🚗 Véhicule
+                                {% else %}🔥 Général{% endif %}
+                            </div>
+                        </div>
+                        <div style="padding: 15px; background: white; border-radius: 12px; border-left: 5px solid var(--accent-strong);">
+                            <strong style="display: block; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; margin-bottom: 5px;">Niveau de Sévérité</strong>
+                            <div style="font-size: 1.2rem; font-weight: 800; color: {{ 'var(--critical)' if incident.severity == 'critical' else 'var(--high)' if incident.severity == 'high' else 'var(--medium)' if incident.severity == 'medium' else 'var(--low)' }};">
+                                {% if incident.severity == 'low' %}🟡 Low Risk
+                                {% elif incident.severity == 'medium' %}🟠 Medium Hazard
+                                {% elif incident.severity == 'high' %}🔴 High Danger
+                                {% elif incident.severity == 'critical' %}🚨 Critical Threat
+                                {% else %}🟠 Medium Hazard{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="section grid-two">
+                <div class="subcard">
+                    <h3 class="section-title">Tableau 2: Analyse algorithmique</h3>
+                    <table class="small-table">
+                        <tbody>
+                            <tr>
+                                <th>Algorithme sélectionné</th>
+                                <td style="font-weight: 800; color: var(--accent-strong);">{{ algo_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Pourquoi ce choix ?</th>
+                                <td>{{ selection_reason }}</td>
+                            </tr>
+                            <tr>
+                                <th>Pourquoi cet algorithme ?</th>
+                                <td>
+                                    {{ algo_logic }}
+                                    <div class="muted" style="margin-top: 4px; font-size: 12px;">Sélection automatique selon la sévérité, le type de feu, le vent et la pluie.</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Temps de calcul</th>
+                                <td>{{ algo_time }} s</td>
+                            </tr>
+                            <tr>
+                                <th>Coût opérationnel estimé</th>
+                                <td>{{ algo_cost }} DA</td>
+                            </tr>
+                            <tr>
+                                <th>Fiabilité du modèle</th>
+                                <td><strong style="color: var(--low);">{{ algo_reliability }}%</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="subcard">
+                    <h3 class="section-title">Tableau 3: Facteurs influents</h3>
+                    <div class="callout">
+                        Température, vent et pluie sont synthétisés ici pour faciliter la lecture rapide du rapport.
+                    </div>
+                    <table class="small-table">
+                        <tbody>
+                            <tr>
+                                <th>Température</th>
+                                <td><strong>{{ weather.temp }}°C</strong> <span class="muted">- accélère le risque domino</span></td>
+                            </tr>
+                            <tr>
+                                <th>Vent</th>
+                                <td><strong>{{ weather.wind }} km/h</strong> <span class="muted">- étend la zone de couverture</span></td>
+                            </tr>
+                            <tr>
+                                <th>Pluie</th>
+                                <td><strong>{{ weather.rain }} mm</strong> <span class="muted">- ralentit la propagation</span></td>
+                            </tr>
+                            <tr>
+                                <th>Zone</th>
+                                <td>{{ zone.name if zone else 'Zone inconnue' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3 class="section-title">Tableau 4: Ressources déployées</h3>
+                <p class="section-text">Ressources envoyées sur le terrain avec distance et ETA estimés.</p>
+                <table class="dispatch-table">
+                    <thead>
+                        <tr>
+                            <th>Équipement / Véhicule</th>
+                            <th>Caserne (Unité)</th>
+                            <th>Distance</th>
+                            <th>ETA (Arrivée estimée)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in dispatches %}
+                        <tr>
+                            <td>{{ d.equipment_type }}</td>
+                            <td>{{ d.unit_name or 'Unité #' ~ d.unit_id }}</td>
+                            <td>{{ "%.1f"|format(d.distance_km) if d.distance_km else 'N/A' }} km</td>
+                            <td>{{ "%.0f"|format(d.eta_minutes) if d.eta_minutes else 'N/A' }} min</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not dispatches %}
+                        <tr>
+                            <td colspan="4" style="text-align:center; color: var(--muted);">Aucune ressource déployée pour le moment.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="footer">Généré par FireSafe Intelligence Hub - AlgoriCorp Civil Protection</div>
+        </div>
+    </div>
+</body>
+</html>

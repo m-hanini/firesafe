@@ -1,0 +1,162 @@
+{% extends "index.html" %}
+{% block content %}
+<div class="notifications-container-premium">
+    <header class="page-header-premium">
+        <div class="header-left">
+            <h1><span class="icon">🔔</span> Centre de Notifications</h1>
+            <p>Gérez vos alertes d'incendie et mises à jour système</p>
+        </div>
+        <div class="header-right">
+            <button class="btn-clear-all" onclick="clearAllNotifications()">Tout effacer</button>
+        </div>
+    </header>
+
+    <div class="notif-stats-grid">
+        <div class="stat-card total">
+            <span class="stat-label">Total</span>
+            <span class="stat-value" id="total-notifs">0</span>
+        </div>
+        <div class="stat-card critical">
+            <span class="stat-label">Critique</span>
+            <span class="stat-value" id="critical-notifs">0</span>
+        </div>
+        <div class="stat-card warning">
+            <span class="stat-label">Avertissement</span>
+            <span class="stat-value" id="warning-notifs">0</span>
+        </div>
+    </div>
+
+    <div class="notif-full-list" id="notifications-full-list">
+        <!-- Will be populated by JS -->
+        <div class="notif-loading">Chargement des alertes...</div>
+    </div>
+</div>
+
+<style>
+.notifications-container-premium {
+    padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    color: white;
+}
+.page-header-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+.page-header-premium h1 { font-size: 2rem; margin-bottom: 5px; }
+.page-header-premium p { color: #94a3b8; }
+
+.notif-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+.stat-card {
+    background: rgba(30, 41, 59, 0.7);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+}
+.stat-label { font-size: 0.9rem; color: #94a3b8; }
+.stat-value { font-size: 1.8rem; font-weight: bold; }
+.stat-card.critical { border-left: 4px solid #ef4444; }
+.stat-card.warning { border-left: 4px solid #f59e0b; }
+
+.notif-full-list {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.05);
+    min-height: 400px;
+}
+.big-notif-item {
+    display: flex;
+    padding: 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.2s;
+    align-items: center;
+    gap: 20px;
+}
+.big-notif-item:hover { background: rgba(255,255,255,0.02); }
+.big-notif-icon {
+    font-size: 2rem;
+    background: rgba(255,255,255,0.05);
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+.big-notif-content { flex: 1; }
+.big-notif-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 4px; }
+.big-notif-desc { color: #94a3b8; margin-bottom: 8px; }
+.big-notif-time { font-size: 0.8rem; color: #64748b; }
+
+.btn-map-link {
+    background: #f97316;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn-clear-all {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid #ef4444;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Override standard render function to also update this page if present
+    const originalRender = window.renderNotificationsDropdown;
+    window.renderNotificationsDropdown = function() {
+        if (originalRender) originalRender();
+        updateFullPage();
+    };
+    updateFullPage();
+});
+
+function updateFullPage() {
+    const list = document.getElementById('notifications-full-list');
+    if (!list) return;
+
+    if (!state.notifications.length) {
+        list.innerHTML = '<div class="notif-empty" style="padding: 50px; text-align: center; color: #64748b;">Aucune alerte à afficher</div>';
+        return;
+    }
+
+    document.getElementById('total-notifs').textContent = state.notifications.length;
+    document.getElementById('critical-notifs').textContent = state.notifications.filter(n => n.icon === '🔥').length;
+    document.getElementById('warning-notifs').textContent = state.notifications.filter(n => n.icon === '⚠️' || n.icon === '🆕').length;
+
+    list.innerHTML = state.notifications.map(n => `
+        <div class="big-notif-item">
+            <div class="big-notif-icon">${n.icon || '🔔'}</div>
+            <div class="big-notif-content">
+                <div class="big-notif-title">${n.title}</div>
+                <div class="big-notif-desc">${n.description}</div>
+                <div class="big-notif-time">${n.time}</div>
+            </div>
+            <button class="btn-map-link" onclick="goToMapAndFocus(${n.id}, ${n.lat}, ${n.lng})">📍 LOCALISER</button>
+        </div>
+    `).join('');
+}
+
+function goToMapAndFocus(id, lat, lng) {
+    // Since we are on a different page, we need to go back to dashboard first
+    // and then trigger the focus. For now, simple redirect if needed or focus if on same page logic.
+    window.location.href = '/dashboard?focus=' + id + '&lat=' + lat + '&lng=' + lng;
+}
+</script>
+{% endblock %}

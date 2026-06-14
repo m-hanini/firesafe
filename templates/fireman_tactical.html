@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FireSafe AI - Agent Terminal</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1, 99999) | random }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* PRINT STYLES FOR PDF EXPORT */
+        @media print {
+            .sidebar, .top-bar, .nav-buttons, .algo-controls, .efficiency-chart-container, .weather-quick-pill, .search-box, .sidebar-footer, .dashboard-panel-section:not(#panel-analysis) {
+                display: none !important;
+            }
+            .main-content {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+            #panel-analysis {
+                display: block !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            table {
+                width: 100% !important;
+                border: 2px solid #333 !important;
+                color: black !important;
+                background: white !important;
+            }
+            th {
+                background: #f0f0f0 !important;
+                color: black !important;
+                border: 1px solid #333 !important;
+            }
+            td {
+                border: 1px solid #ccc !important;
+                color: black !important;
+            }
+            h1, h2, h3 {
+                color: black !important;
+                margin-top: 0;
+            }
+        }
+
+
+        /* ── TOP BAR — full horizontal row ── */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(20px);
+            z-index: 100;
+            gap: 12px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .header-right-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .clock-pill {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+
+        .action-circle {
+            background: rgba(255, 106, 0, 0.08);
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            padding: 9px 11px;
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            position: relative;
+            line-height: 1;
+        }
+
+        .action-circle:hover {
+            background: rgba(255, 106, 0, 0.18);
+            border-color: rgba(255, 106, 0, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 99px;
+            padding: 5px 14px 5px 5px;
+            flex-shrink: 0;
+        }
+
+        .user-pill img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid var(--ember-core);
+            object-fit: cover;
+        }
+
+        .user-pill-info {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            line-height: 1.2;
+        }
+
+        .user-pill-name {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .user-pill-role {
+            font-size: 0.66rem;
+            color: var(--ember-bright);
+            font-weight: 600;
+        }
+
+        .mission-card {
+            background: linear-gradient(145deg, rgba(34, 197, 94, 0.12), rgba(16, 14, 18, 0.92));
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            border-radius: 14px;
+            padding: 22px;
+            margin-bottom: 16px;
+        }
+
+        .mission-status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .mission-stat {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .mission-stat h4 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 6px;
+        }
+
+        .mission-stat .val {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #22c55e;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            margin-bottom: 10px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-arrived {
+            background: linear-gradient(90deg, #4a9e6e, #22c55e);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-complete {
+            background: linear-gradient(90deg, #11998e, #38ef7d);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(50, 200, 100, 0.4);
+        }
+
+        .btn-hq {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .empty-mission {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .empty-mission .icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 15px;
+            filter: grayscale(0.5);
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(230, 57, 70, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(230, 57, 70, 0);
+            }
+        }
+
+        .pulsing-alert {
+            animation: pulse-red 2s infinite;
+            border-color: #e63946 !important;
+        }
+
+        /* Premium Notification Styles */
+        .notif-container { position: relative; }
+        .action-circle {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+            font-size: 1.2rem;
+        }
+        .action-circle:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
+        .notif-badge {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            background: #ff4e50;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 20px;
+            border: 2px solid #1a1a1a;
+            box-shadow: 0 4px 12px rgba(255, 78, 80, 0.4);
+            min-width: 18px;
+            text-align: center;
+            z-index: 10;
+        }
+        .notif-panel {
+            position: absolute;
+            top: 55px;
+            right: 0;
+            width: 320px;
+            background: rgba(13, 10, 15, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            z-index: 9999;
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            display: none;
+        }
+        .notif-panel.active { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .notif-header {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .notif-header h3 { margin: 0; font-size: 0.85rem; font-weight: 800; letter-spacing: 1px; color: rgba(255,255,255,0.6); }
+        .notif-header .clear-all {
+            background: none; border: none; color: #ff4e50; font-size: 0.75rem; font-weight: 800; cursor: pointer; letter-spacing: 1px;
+        }
+        .notif-list { max-height: 400px; overflow-y: auto; }
+        .notif-empty { padding: 40px 20px; text-align: center; color: rgba(255,255,255,0.3); font-size: 0.85rem; }
+    </style>
+    <script>
+        function toggleNotifPanel(e) {
+            if (e) e.stopPropagation();
+            const panel = document.getElementById('notif-panel');
+            if (panel) {
+                panel.classList.toggle('active');
+                if (panel.classList.contains('active') && typeof renderNotificationsDropdown === 'function') {
+                    renderNotificationsDropdown();
+                }
+            }
+        }
+    </script>
+</head>
+
+<body onload="checkJSLoad()">
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'position:fixed; top:0; left:0; width:100%; background:#ef4444; color:white; z-index:10000; padding:15px; font-weight:bold; font-family:sans-serif; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.5);';
+            errorDiv.innerHTML = '🚨 SYSTEM CRASH: ' + msg + ' (Line: ' + line + ')';
+            document.body.appendChild(errorDiv);
+            return false;
+        };
+        function checkJSLoad() {
+            setTimeout(() => {
+                if (typeof init !== 'function') {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.cssText = 'position:fixed; top:50px; left:0; width:100%; background:#f97316; color:white; z-index:10000; padding:15px; font-weight:bold; font-family:sans-serif; text-align:center;';
+                    errorDiv.innerHTML = '⚠️ SCRIPT NOT LOADED: The main logic file failed to parse or is missing.';
+                    document.body.appendChild(errorDiv);
+                }
+            }, 2000);
+        }
+    </script>
+
+    <!-- Fire Background -->
+    <div class="fire-container">
+        <div class="flame flame-glow"></div>
+        <div class="flame flame-mid"></div>
+        <div class="flame flame-left"></div>
+        <div class="flame flame-right"></div>
+        <div class="flame flame-inner"></div>
+        <div class="flame flame-core"></div>
+    </div>
+    <div class="ember-container" id="ember-container"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>⚡️ AGENT PORTAL</h1>
+            </div>
+
+            <nav class="nav-buttons">
+                <button class="nav-btn active" id="btn-dashboard" onclick="setMode('dashboard')">
+                    <span class="icon">🛰️</span> MISSION
+                </button>
+                <button class="nav-btn" id="btn-report" onclick="setMode('report')">
+                    <span class="icon">🔥</span> REPORT FIRE
+                </button>
+
+
+
+                <button class="nav-btn" id="btn-optimization" onclick="setMode('optimization')">
+                    <span class="icon">⚡</span> OPTIMIZER
+                </button>
+                <button class="nav-btn" id="btn-scientific" onclick="setMode('scientific')">
+                    <span class="icon">🔬</span> ANALYSIS
+                </button>
+                
+                <button class="nav-btn" id="btn-scenario" onclick="setMode('scenario')">
+                    <span class="icon">🛰️</span> TACTICAL SCENARIO
+                </button>
+
+                <button class="nav-btn" id="btn-maintenance" onclick="setMode('maintenance')">
+                    <span class="icon">🛠️</span> UNIT HEALTH
+                </button>
+
+                <button class="nav-btn" id="btn-reports" onclick="setMode('reports')">
+                    <span class="icon">📋</span> LOGS
+                </button>
+
+                <button class="nav-btn" onclick="triggerTacticalReset()" style="color: #ef4444; font-weight: 700;">
+                    <span class="icon">🧹</span> RESET ALL FIRES
+                </button>
+
+                <a href="/logout" class="nav-btn" style="text-decoration: none;">
+                    <span class="icon">🚪</span> LOGOUT
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                {% if assigned_unit %}
+                <div style="background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 10px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="font-size: 0.7rem; color: #aaa; text-transform: uppercase;">Assigned Station</div>
+                    <div style="font-weight: 700; color: var(--electric-blue); font-size: 0.9rem;">{{ assigned_unit.name }}</div>
+                    
+                    <div style="margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+                        {% if assigned_unit.status == 'on_pan' %}
+                            <span style="background: #ef4444; width: 8px; height: 8px; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #ef4444;"></span>
+                            <span style="color: #ef4444; font-weight: 800; font-size: 0.8rem;">🚨 EN PANNE</span>
+                        {% else %}
+                            <span style="background: #22c55e; width: 8px; height: 8px; border-radius: 50%; display: inline-block;"></span>
+                            <span style="color: #22c55e; font-weight: 800; font-size: 0.8rem;">🟢 ACTIVE</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="system-status">🟢 Link Secure</div>
+                <div style="font-size: 0.7rem; opacity: 0.5; margin-top: 5px;">Field Agent Portal</div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% if assigned_unit and assigned_unit.status == 'on_pan' %}
+            <div style="background: linear-gradient(90deg, #ef4444, #991b1b); color: white; padding: 12px 20px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.2); animation: pulse-red 2s infinite;">
+                <span style="font-size: 1.5rem;">🚨</span>
+                <div>
+                    <strong style="display: block; font-size: 1rem;">VEHICLE / STATION OUT OF SERVICE (EN PANNE)</strong>
+                    <span style="font-size: 0.85rem; opacity: 0.9;">Your assigned unit <strong>{{ assigned_unit.name }}</strong> is currently marked as out of service. You will not receive new dispatches.</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <header class="top-bar">
+                <!-- Search -->
+                <div class="search-box" style="flex: 1; max-width: 340px;">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="Search mission data..." id="search-input">
+                    <span class="search-shortcut">⌘+F</span>
+                </div>
+
+                <!-- Right group: all horizontal -->
+                <div class="header-right-group">
+
+                    <!-- Weather pill -->
+                    <div class="weather-quick-pill" id="header-weather-pill">
+                        <span id="pill-temp">🌡️ --°C</span>
+                        <span id="pill-wind">💨 -- km/h</span>
+                        <span id="pill-rain">🌧️ -- mm/h</span>
+                    </div>
+
+                    <!-- Clock -->
+                    <div class="clock-pill">
+                        <span id="current-time">00:00:00</span>
+                    </div>
+
+                    <div class="notif-container">
+                        <button id="btn-notifications" class="action-circle" onclick="toggleNotifPanel(event)">
+                            🔔<span id="notif-badge" class="notif-badge hidden">0</span>
+                        </button>
+                        <div id="notif-panel" class="notif-panel">
+                            <div class="notif-header">
+                                <h3>TACTICAL ALERTS</h3>
+                                <button class="clear-all" onclick="clearAllNotifications()">CLEAR</button>
+                            </div>
+                            <div id="notif-list" class="notif-list">
+                                <div class="notif-empty">📡 Scanning for updates...</div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+
+                    <!-- Theme toggle -->
+                    <button id="theme-toggle" class="action-circle">🌙</button>
+
+                    <!-- Map view toggle -->
+                    <button id="view-toggle" class="action-circle" onclick="toggleMapView()">↕️</button>
+
+                    <!-- User profile pill -->
+                    <div class="user-pill">
+                        <img src="{{ user.picture or 'https://ui-avatars.com/api/?name=' ~ (user.name or user.email) ~ '&background=f97316&color=fff&bold=true' }}"
+                             alt="Avatar">
+                        <div class="user-pill-info">
+                            <span class="user-pill-name">{{ user.name or user.email.split('@')[0] | capitalize }}</span>
+                            <span class="user-pill-role">@field_agent</span>
+                        </div>
+                    </div>
+
+                </div>
+            </header>
+
+            <div id="map" class="map-view glass-panel">
+                <div id="weather-widget" class="weather-widget"></div>
+                <div id="map-overlay-container" class="map-overlay-container hidden">
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button id="map-confirm-btn" class="map-btn">CONFIRM</button>
+                        <button id="map-cancel-btn" class="map-btn" onclick="cancelAssetSelection()" style="background: #475569;">CANCEL</button>
+                    </div>
+                    <div class="map-instruction">Click map to set location first</div>
+                </div>
+            </div>
+
+            <div class="panels-container">
+                <div class="drawer-handle" onclick="toggleMapView()">
+                    <div class="handle-bar"></div>
+                    <span class="handle-text">TACTICAL DATA DRAWER</span>
+                </div>
+
+                <!-- Dashboard / Mission Panel -->
+                <div id="panel-placeholder" class="dashboard-panel-section">
+                    <div class="dashboard-grid" style="gap: 12px;">
+                        <div class="dash-card tactical-panel" style="grid-column: span 1.5; padding: 15px; min-height: 100px;">
+                            <h3 style="font-size: 0.95rem; margin-bottom: 10px;">🚒 TACTICAL MISSION CENTER</h3>
+                            <div id="active-mission-container">
+                                <div class="empty-state" style="font-size: 0.85rem;">📡 Scanning for emergency dispatches...</div>
+                            </div>
+                            <div id="agent-controls" class="hidden" style="margin-top:15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button class="action-btn btn-arrived" onclick="updateMissionStatus(null, 'arrived')" style="padding: 8px; font-size: 0.8rem;">
+                                    📍 ARRIVED
+                                </button>
+                                <button class="action-btn btn-complete" onclick="updateMissionStatus(null, 'extinguished')" style="padding: 8px; font-size: 0.8rem;">
+                                    ✅ COMPLETE
+                                </button>
+                            </div>
+                        </div>
+                        <div class="dash-card" style="padding: 15px; min-height: 100px;">
+                            <h3 style="font-size: 0.95rem; margin-bottom: 10px;">📊 Mission Pulse</h3>
+                            <div style="height: 100px;"><canvas id="trendChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                </div>
+
+                <!-- MAINTENANCE HUB -->
+                <div id="panel-maintenance" class="dashboard-panel-section hidden">
+                    <div class="dash-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                            <h3>🛠️ UNIT HEALTH & MAINTENANCE</h3>
+                            <div class="maintenance-legend" style="display:flex; gap:15px; font-size:0.75rem;">
+                                <span><i class="fa-solid fa-circle" style="color:var(--solar-yellow);"></i> Operational</span>
+                                <span><i class="fa-solid fa-circle" style="color:#ef4444;"></i> Maintenance Needed</span>
+                            </div>
+                        </div>
+                        <div id="maintenance-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TACTICAL SCENARIO PANEL -->
+                <div id="panel-scenario" class="dashboard-panel-section hidden">
+                    <div class="dash-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                            <h3>🛰️ TACTICAL SCENARIO LOG</h3>
+                            <button onclick="setMode('dashboard')" style="background:rgba(255,255,255,0.1); border:none; color:#fff; padding:5px 12px; border-radius:4px; font-size:0.8rem; cursor:pointer;">
+                                RETURN TO MAP
+                            </button>
+                        </div>
+                        <div id="scenario-log-container" style="background:rgba(0,0,0,0.3); border-radius:12px; padding:20px; border:1px solid rgba(255,255,255,0.05); max-height: 400px; overflow-y: auto;">
+                            <!-- To be implemented: List of tactical steps -->
+                            <div class="scenario-step" style="border-left:2px solid var(--solar-yellow); padding-left:15px; position:relative; margin-bottom:20px;">
+                                <div style="position:absolute; left:-6px; top:0; width:10px; height:10px; border-radius:50%; background:var(--solar-yellow);"></div>
+                                <div style="font-size:0.7rem; color:#888; font-weight:800;">T-0:00 (INITIALIZATION)</div>
+                                <div style="font-size:0.9rem; color:#fff; margin-top:4px;">Fire alarm triggered. AI optimization running...</div>
+                            </div>
+                            <div class="scenario-step" style="border-left:2px solid rgba(255,255,255,0.1); padding-left:15px; position:relative;">
+                                <div style="position:absolute; left:-6px; top:0; width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,0.2);"></div>
+                                <div style="font-size:0.7rem; color:#888; font-weight:800;">T+0:02 (DEPLOYMENT)</div>
+                                <div style="font-size:0.9rem; color:#fff; margin-top:4px;">Waiting for resource confirmation...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Fire Panel -->
+                <div id="panel-report" class="dashboard-panel-section hidden">
+                    <div id="incident-form" class="dashboard-grid"
+                        style="grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                        <div class="dash-card">
+                            <h3>🔥 Fire Incident Data</h3>
+                            <div class="grid-row">
+                                <div class="field">
+                                    <label>Latitude</label>
+                                    <input type="text" id="input-lat" readonly placeholder="Click Map">
+                                </div>
+                                <div class="field">
+                                    <label>Longitude</label>
+                                    <input type="text" id="input-lng" readonly placeholder="Click Map">
+                                </div>
+                            </div>
+                            <div class="grid-row" style="margin-top: 10px;">
+                                <div class="field">
+                                    <label>Area Type</label>
+                                    <select id="input-area">
+                                        <option>Urban</option>
+                                        <option>Wildland</option>
+                                        <option>Industrial</option>
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label>Severity Level</label>
+                                    <select id="input-severity">
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                        <option value="critical">Critical</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="field" style="margin-top: 10px;">
+                                <label>Current Status</label>
+                                <select id="input-status">
+                                    <option>Active</option>
+                                    <option>Contained</option>
+                                    <option>Extinguished</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <h3>🌦️ ENVIRONMENTAL CONTEXT</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                                <div class="stat-card"
+                                    style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                                    <div class="stat-label" style="font-size: 0.7rem; color: #888;">🌧️ RAIN (mm/h)
+                                    </div>
+                                    <input type="text" id="report-rain-val" value="0.0 mm/h"
+                                        style="width: 100%; background: none; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 1rem; font-weight: 700; padding: 5px; border-radius: 4px; text-align: center;">
+                                </div>
+                                <div class="stat-card"
+                                    style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                                    <div class="stat-label" style="font-size: 0.7rem; color: #888;">💨 WIND</div>
+                                    <input type="text" id="report-wind-val" value="0 km/h"
+                                        style="width: 100%; background: none; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 1rem; font-weight: 700; padding: 5px; border-radius: 4px; text-align: center;">
+                                </div>
+                                <div class="stat-card"
+                                    style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                                    <div class="stat-label" style="font-size: 0.7rem; color: #888;">🌡️ TEMP</div>
+                                    <input type="text" id="report-temp-val" value="16.6°C"
+                                        style="width: 100%; background: none; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 1rem; font-weight: 700; padding: 5px; border-radius: 4px; text-align: center;">
+                                </div>
+                            </div>
+                            <div class="field" style="margin-top: 12px;">
+                                <label>Auto-Risk Assessment</label>
+                                <input type="text" readonly value="Calculating..." id="auto-risk-display"
+                                    style="width: 100%; border-radius: 8px;">
+                            </div>
+                        </div>
+                        <div class="dash-card" style="padding: 15px;">
+                            <h3 style="margin-bottom: 8px;">👥 Impact Assessment</h3>
+                            <div class="field" style="margin-bottom: 4px;">
+                                <label>People Trapped (Est.)</label>
+                                <input type="number" id="input-affected" value="0">
+                            </div>
+                            <div class="field">
+                                <label>Zone Classification</label>
+                                <select id="input-zone">
+                                    <option>Urban</option>
+                                    <option>Wildland</option>
+                                    <option>Industrial</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="dash-card" style="padding: 15px;">
+                            <h3 style="margin-bottom: 8px;">🌐 Response Network</h3>
+                            <div class="field" style="margin-bottom: 4px;">
+                                <label>Total Stations</label>
+                                <input type="text" id="report-station-count" readonly value="0">
+                            </div>
+                            <div class="grid-row" style="margin-bottom: 4px; gap: 8px;">
+                                <div class="field">
+                                    <label>Open Alerts</label>
+                                    <input type="text" id="summary-open-alerts" readonly value="0">
+                                </div>
+                                <div class="field">
+                                    <label>High Domino Risk</label>
+                                    <input type="text" id="summary-high-domino" readonly value="0">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label>Active Avg ETA</label>
+                                <input type="text" id="summary-avg-eta" readonly value="0 min">
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top:25px; display:flex; justify-content:center;">
+                        <button class="algo-action-btn" onclick="submitIncident()" style="max-width:300px;">🚀 REPORT
+                            FIRE INCIDENT</button>
+                    </div>
+                </div>
+
+                <!-- Optimization Hub Panel -->
+                <div id="panel-optimization" class="dashboard-panel-section hidden">
+                    <div class="section-header" style="margin-bottom: 25px;">
+                        <h2 style="display: flex; align-items: center; gap: 15px;">
+                            <span style="font-size: 2rem;">🚀</span> Optimization Intelligence Hub
+                        </h2>
+                        <p style="color: var(--text-muted); font-size: 0.95rem;">Select one or more algorithmic brains to compare tactical deployment strategies.</p>
+                    </div>
+
+                    <div style="background: rgba(255,255,255,0.02); padding: 25px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 25px;">
+                            <!-- Integer Programming -->
+                            <div class="algo-card-compact" onclick="toggleAlgoSelection(this, 'ip')" id="card-ip">
+                                <div class="card-check"><input type="checkbox" id="check-ip"></div>
+                                <div class="card-content">
+                                    <div class="card-icon">🔢</div>
+                                    <div class="card-title">Integer Programming</div>
+                                    <div class="card-type">Deterministic</div>
+                                </div>
+                            </div>
+                            <!-- Goal Programming -->
+                            <div class="algo-card-compact" onclick="toggleAlgoSelection(this, 'gp')" id="card-gp">
+                                <div class="card-check"><input type="checkbox" id="check-gp"></div>
+                                <div class="card-content">
+                                    <div class="card-icon">🎯</div>
+                                    <div class="card-title">Goal Programming</div>
+                                    <div class="card-type">Objective-Based</div>
+                                </div>
+                            </div>
+                            <!-- NSGA-II -->
+                            <div class="algo-card-compact" onclick="toggleAlgoSelection(this, 'nsga')" id="card-nsga">
+                                <div class="card-check"><input type="checkbox" id="check-nsga"></div>
+                                <div class="card-content">
+                                    <div class="card-icon">🧬</div>
+                                    <div class="card-title">NSGA-II & GA</div>
+                                    <div class="card-type">Meta-Heuristic</div>
+                                </div>
+                            </div>
+                            <!-- Hybrid -->
+                            <div class="algo-card-compact" onclick="toggleAlgoSelection(this, 'hybrid')" id="card-hybrid">
+                                <div class="card-check"><input type="checkbox" id="check-hybrid"></div>
+                                <div class="card-content">
+                                    <div class="card-icon">⚡</div>
+                                    <div class="card-title">Hybrid PSO-GWO Swarm</div>
+                                    <div class="card-type">High-Performance</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center;">
+                            <button id="run-multi-opt-btn" class="algo-action-btn" onclick="runMultiOptimization()" 
+                                style="max-width: 380px; background: linear-gradient(135deg, #ff6a00, #ee5d00); box-shadow: 0 4px 20px rgba(255, 106, 0, 0.4); opacity: 0.6; pointer-events: none;">
+                                🚀 RUN COMPARATIVE OPTIMIZATION
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="optimization-results-multi"
+                        style="margin-top: 40px; display: flex; flex-wrap: wrap; gap: 28px;"></div>
+                    <div id="optimization-results-dashboard" class="hidden"
+                        style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 30px;">
+                        <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 25px;">
+                            <div class="dash-card">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <h3 style="margin:0;">📉 Optimization Convergence</h3>
+                                    <span id="algo-running-tag"
+                                        style="font-size: 0.7rem; color: var(--primary); font-weight: 800; border: 1px solid var(--primary); padding: 2px 8px; border-radius: 4px;">PROCESSING...</span>
+                                </div>
+                                <div style="height: 280px;"><canvas id="convergenceChart"></canvas></div>
+                            </div>
+                            <div class="dash-card">
+                                <h3 style="margin-bottom: 20px;">📊 Strategic Performance (T-D-C)</h3>
+                                <div style="height: 280px;"><canvas id="resourcePieChart"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="dash-card"
+                            style="margin-top: 25px; border-left: 5px solid var(--primary); background: rgba(0,0,0,0.3);">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin:0;">📋 Tactical Deployment Blueprint</h3>
+                                <button onclick="window.print()" class="map-btn blue" style="padding: 5px 15px; font-size: 0.75rem;">EXPORT
+                                    PDF</button>
+                            </div>
+                            <div id="algo-plan-details"
+                                style="font-family: 'Courier New', monospace; font-size: 0.95rem; color: #00ff88; line-height: 1.7; white-space: pre-wrap;">
+                                Waiting for algorithm selection...
+                            </div>
+                            <div id="optimization-log" style="display:none;"></div>
+                        </div>
+
+                        <!-- Tactical Metrics Summary (Moved below PDF per user request) -->
+                        <div id="opt-metrics-section" style="margin-top: 25px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                            <div class="dash-card" style="text-align: center; padding: 12px; border-top: 2px solid #3b82f6; min-height: 80px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 4px; font-weight: 700; letter-spacing: 1px;">📍 DISTANCE</div>
+                                <div id="opt-metric-distance" style="font-size: 1.1rem; font-weight: 800; color: #fff;">0.0</div>
+                            </div>
+                            <div class="dash-card" style="text-align: center; padding: 12px; border-top: 2px solid #f97316; min-height: 80px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 4px; font-weight: 700; letter-spacing: 1px;">⏱️ TIME</div>
+                                <div id="opt-metric-time" style="font-size: 1.1rem; font-weight: 800; color: #fff;">0s</div>
+                            </div>
+                            <div class="dash-card" style="text-align: center; padding: 12px; border-top: 2px solid #22c55e; min-height: 80px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 4px; font-weight: 700; letter-spacing: 1px;">💰 COST</div>
+                                <div id="opt-metric-cost" style="font-size: 1.1rem; font-weight: 800; color: #fff;">0</div>
+                            </div>
+                            <div class="dash-card" style="text-align: center; padding: 12px; border-top: 2px solid #ef4444; min-height: 80px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 4px; font-weight: 700; letter-spacing: 1px;">📉 LOSSES</div>
+                                <div id="opt-metric-losses" style="font-size: 1.1rem; font-weight: 800; color: #fff;">0%</div>
+                            </div>
+                        </div>
+
+                        <!-- Global Comparison Radar (Hexagon) -->
+                        <div id="multi-opt-radar-container" style="display: none; margin-top: 30px; background: rgba(0,0,0,0.2); padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                            <h3 style="text-align: center; color: #a78bfa; margin-bottom: 20px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1.5px;">📊 Global Tactical Efficiency (Radar Comparison)</h3>
+                            <div style="height: 400px;">
+                                <canvas id="globalRadarChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Full Report Action -->
+                        <div style="margin-top: 30px; text-align: center;">
+                            <button onclick="window.print()" class="algo-action-btn" style="max-width: 350px; background: linear-gradient(135deg, #334155, #0f172a); display: flex; align-items: center; justify-content: center; gap: 12px; margin: 0 auto;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-printer"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                                DOWNLOAD MISSION REPORT (PDF)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scientific Analysis Panel -->
+                <div id="panel-scientific" class="dashboard-panel-section hidden">
+                    <div class="section-header" style="margin-bottom: 25px;">
+                        <h2>🔬 Scientific Algorithm Benchmarking</h2>
+                        <p style="color: var(--text-muted);">Comparative analysis of GA, Hybrid PSO-GWO, IP, and GP
+                            across tactical metrics.</p>
+                        <div id="sci-selected-algo-container" style="margin-top: 10px; display: none; align-items: center; gap: 12px; background: linear-gradient(90deg, rgba(167, 139, 250, 0.12), rgba(167, 139, 250, 0.03)); padding: 6px 18px; border-radius: 50px; border: 1px solid rgba(167, 139, 250, 0.2); width: fit-content;">
+                            <span style="font-size: 0.65rem; color: #a78bfa; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px;">Brain:</span>
+                            <span id="sci-selected-algo-name" style="font-size: 0.9rem; color: #fff; font-weight: 800; letter-spacing: 0.5px;">-</span>
+                        </div>
+                    </div>
+                    
+                    <div id="sci-export-section" style="margin-top: 20px;">
+                        <!-- Summary Metrics -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+                            <div class="dash-card" style="text-align: center; padding: 10px; border-top: 2px solid #3b82f6; border-radius: 10px; background: rgba(255,255,255,0.03); min-height: 60px; display: flex; flex-direction: column; justify-content: center;">
+                                <div style="font-size: 0.6rem; color: #aaa; font-weight: 700; letter-spacing: 1px; margin-bottom: 2px;">📍 DISTANCE</div>
+                                <div id="sci-metric-distance" style="font-size: 1rem; font-weight: 800; color: #fff;">0.0</div>
+                            </div>
+                            <div class="dash-card" style="text-align: center; padding: 10px; border-top: 2px solid #f97316; border-radius: 10px; background: rgba(255,255,255,0.03); min-height: 60px; display: flex; flex-direction: column; justify-content: center;">
+                                <div style="font-size: 0.6rem; color: #aaa; font-weight: 700; letter-spacing: 1px; margin-bottom: 2px;">⏱️ TIME</div>
+                                <div id="sci-metric-time" style="font-size: 1rem; font-weight: 800; color: #fff;">0s</div>
+                            </div>
+                            <div class="dash-card" style="text-align: center; padding: 10px; border-top: 2px solid #22c55e; border-radius: 10px; background: rgba(255,255,255,0.03); min-height: 60px; display: flex; flex-direction: column; justify-content: center;">
+                                <div style="font-size: 0.6rem; color: #aaa; font-weight: 700; letter-spacing: 1px; margin-bottom: 2px;">💰 COST</div>
+                                <div id="sci-metric-cost" style="font-size: 1rem; font-weight: 800; color: #fff;">0</div>
+                            </div>
+                            <div class="dash-card" style="text-align: center; padding: 10px; border-top: 2px solid #ef4444; border-radius: 10px; background: rgba(255,255,255,0.03); min-height: 60px; display: flex; flex-direction: column; justify-content: center;">
+                                <div style="font-size: 0.6rem; color: #aaa; font-weight: 700; letter-spacing: 1px; margin-bottom: 2px;">📉 LOSSES</div>
+                                <div id="sci-metric-losses" style="font-size: 1rem; font-weight: 800; color: #fff;">0%</div>
+                            </div>
+                        </div>
+                        <!-- Comparison Table Container -->
+                        <div id="sci-comparison-table" style="overflow-x: auto; margin-bottom: 30px; background: rgba(255,255,255,0.01); border-radius: 12px;"></div>
+                    </div> <!-- نهاية sci-export-section -->
+                    <div class="dash-card">
+                        <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 12px 0; font-size: 0.8rem; color: #a78bfa; text-transform: uppercase; letter-spacing: 1px;">Scientific engine: Grey Wolf Optimizer (GWO)</h4>
+                            <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center;">
+                                <div style="font-size: 0.95rem; color: #eee; background: rgba(59, 130, 246, 0.1); padding: 8px 15px; border-radius: 8px; border-left: 3px solid #3b82f6;">
+                                    🚀 <strong>GWO Framework:</strong> Analyzes Pareto-optimal tradeoffs between dispatch costs and ecological damage.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <button class="algo-action-btn" onclick="runAlgorithmComparison()"
+                                style="max-width: 280px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); border: 1px solid rgba(255,255,255,0.1); font-weight: 800; letter-spacing: 0.5px;">🚀 INITIATE SCIENTIFIC BENCHMARK</button>
+                            <div id="scientific-status" style="color: #a78bfa; font-weight: 700; font-size: 0.9rem;">
+                                Ready to analyze...</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px;">
+                            <div
+                                style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; height: 350px;">
+                                <canvas id="comparisonChart"></canvas>
+                            </div>
+                            <div id="comparison-summary"
+                                style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                                <p style="text-align: center; color: #666; padding-top: 50px;">Run benchmark to see
+                                    matrix...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mission Logs / History Panel -->
+                <div id="panel-reports" class="dashboard-panel-section hidden">
+                    <div class="dash-card">
+                        <div class="section-header">
+                            <h2>📋 Emergency Incident Logs</h2>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; margin-top:20px;">
+                            <thead>
+                                <tr style="background: rgba(255,255,255,0.03);">
+                                    <th style="padding:15px; color:var(--electric-blue);">ID</th>
+                                    <th style="padding:15px; color:var(--electric-blue);">TIME</th>
+                                    <th style="padding:15px; color:var(--electric-blue);">LOCATION</th>
+                                    <th style="padding:15px; color:var(--electric-blue);">SEVERITY</th>
+                                    <th style="padding:15px; color:var(--electric-blue);">STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reports-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ETA Projections Panel -->
+                <div id="panel-estimates" class="dashboard-panel-section hidden">
+                    <div class="dash-card">
+                        <h2>⏱️ Tactical ETA Projections</h2>
+                        <table style="width: 100%; border-collapse: collapse; margin-top:20px;">
+                            <thead>
+                                <tr style="background: rgba(255,255,255,0.03);">
+                                    <th style="padding:15px;">INCIDENT</th>
+                                    <th style="padding:15px;">🚗 CAR</th>
+                                    <th style="padding:15px;">🚛 TRUCK</th>
+                                    <th style="padding:15px;">🚁 HELI</th>
+                                </tr>
+                            </thead>
+                            <tbody id="estimates-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Hidden -->
+    <input type="hidden" id="user-role" value="fireman">
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Dispatch Modal -->
+    <div id="dispatch-modal" style="
+        display: none;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
+        background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+        align-items: center; justify-content: center;
+    ">
+        <div style="
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border: 1px solid rgba(255, 152, 0, 0.4);
+            border-radius: 16px; padding: 32px;
+            max-width: 680px; width: 92%; max-height: 82vh; overflow-y: auto;
+            box-shadow: 0 0 60px rgba(255, 100, 0, 0.25), 0 25px 50px rgba(0,0,0,0.6);
+            position: relative;
+        ">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid rgba(255,152,0,0.2); padding-bottom: 16px;">
+                <div>
+                    <h2 style="margin: 0; color: #ff9800; font-size: 1.3rem; letter-spacing: 1px;">🚒 STATION RESOURCE
+                        REPORT</h2>
+                    <p style="margin: 6px 0 0 0; color: rgba(255,255,255,0.4); font-size: 0.82rem;">Post-dispatch
+                        inventory status</p>
+                </div>
+                <button onclick="document.getElementById('dispatch-modal').style.display='none'" style="
+                    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+                    color: #fff; border-radius: 50%; width: 36px; height: 36px;
+                    cursor: pointer; font-size: 1.1rem;
+                ">✕</button>
+            </div>
+            <div id="dispatch-report-content">
+                <p style="color: #aaa;">Loading resource data...</p>
+            </div>
+            <div style="margin-top: 24px; text-align: center;">
+                <button onclick="document.getElementById('dispatch-modal').style.display='none'" style="
+                    background: linear-gradient(135deg, #ff9800, #f44336);
+                    border: none; color: #fff; padding: 12px 40px;
+                    border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer;
+                ">✅ CLOSE REPORT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Smart prompts container (hybrid resolution system) -->
+    <div id="smart-prompts-container" style="
+        position: fixed; bottom: 30px; right: 30px; z-index: 8000;
+        display: flex; flex-direction: column; gap: 12px; pointer-events: none;
+        max-width: 340px;
+    "></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}?v={{ range(1, 99999) | random }}"></script>
+    <script src="{{ url_for('static', filename='js/fire_particles.js') }}"></script>
+    <script>
+        // Deep linking support
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const panel = urlParams.get('panel');
+            const alertId = urlParams.get('alert_id');
+            const lat = parseFloat(urlParams.get('lat'));
+            const lng = parseFloat(urlParams.get('lng'));
+
+            if (!Number.isNaN(lat) && !Number.isNaN(lng) && typeof state !== 'undefined') {
+                state.lastClickedLocation = { lat, lng };
+            }
+
+            if (alertId && typeof setMode === 'function') {
+                setTimeout(() => {
+                    setMode('unit');
+                    if (typeof showToast === 'function') {
+                        showToast('Mission Loaded', `Alert #${alertId} opened in unit view`, 'info');
+                    }
+                }, 120);
+                return;
+            }
+
+            if (panel && typeof setMode === 'function') {
+                setMode(panel === 'report' ? 'report' : panel);
+            }
+        });
+    </script>
+</body>
+
+</html>

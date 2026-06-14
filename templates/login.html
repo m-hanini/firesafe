@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Emergency Portal - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-light: #f8fafc;
+            --card-bg: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --input-bg: #f8fafc;
+            --input-text: #0f172a;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-light) !important; 
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px; 
+            overflow-y: auto; /* Native scrolling */
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+        }
+
+        /* Light Grid Overlay background */
+        body::before {
+            content: '';
+            position: fixed; 
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 450px; /* Spacious width */
+            padding: 45px 38px;
+            position: relative;
+            z-index: 5;
+            border-radius: 28px;
+            background: var(--card-bg);
+            border: 1px solid #e2e8f0;
+            box-shadow: 
+                0 10px 25px -5px rgba(0, 0, 0, 0.05),
+                0 8px 10px -6px rgba(0, 0, 0, 0.05),
+                0 20px 40px rgba(0, 0, 0, 0.03);
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        /* Royal Blue Shield Box */
+        .shield-icon-container {
+            width: 62px;
+            height: 62px;
+            background: var(--primary); 
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
+        }
+
+        .shield-icon-container i {
+            color: #ffffff;
+            font-size: 1.8rem;
+        }
+
+        h2 {
+            color: var(--text-dark);
+            font-size: 1.8rem;
+            margin: 0 0 10px 0;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            margin: 0 0 28px 0;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-bottom: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            text-align: left;
+        }
+
+        /* Segmented Toggles */
+        .toggle-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .toggle-btn {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: var(--text-muted);
+            padding: 12px 14px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            outline: none;
+        }
+
+        .toggle-btn:hover {
+            background: #f1f5f9;
+            color: #475569;
+            border-color: #cbd5e1;
+        }
+
+        /* Active Type Toggles */
+        .toggle-btn.active[data-type="operational"] {
+            background: #eff6ff;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+        }
+
+        .toggle-btn.active[data-type="citizen"] {
+            background: #eff6ff;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+        }
+
+        /* Active Identity Toggles */
+        .toggle-btn.active[data-identity="fireman"] {
+            background: #eff6ff;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+        }
+
+        .toggle-btn.active[data-identity="admin"] {
+            background: #eff6ff;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+        }
+
+        /* Input capsule fields with left icons */
+        .input-group {
+            margin-bottom: 22px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1.1rem;
+            pointer-events: none;
+            transition: color 0.25s ease;
+        }
+
+        .input-box {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid #e2e8f0;
+            color: var(--input-text);
+            padding: 16px 24px 16px 52px; /* Pad left for icon */
+            border-radius: 50px; /* Modern capsule shape */
+            font-size: 0.98rem;
+            font-weight: 700;
+            outline: none;
+            transition: all 0.25s ease;
+            box-sizing: border-box;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+            font-family: inherit;
+        }
+
+        .input-box::placeholder {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .input-box:focus {
+            border-color: var(--primary);
+            box-shadow: 
+                0 0 0 4px rgba(37, 99, 235, 0.1),
+                inset 0 1px 2px rgba(0,0,0,0.02);
+            background: #ffffff;
+        }
+
+        .input-box:focus + i {
+            color: var(--primary);
+        }
+
+        /* Info notice styling */
+        .clearance-warning {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            font-size: 0.85rem;
+            margin-bottom: 26px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            padding: 12px 18px;
+            border-radius: 12px;
+            text-align: left;
+        }
+
+        .clearance-warning i {
+            font-size: 1rem;
+            color: var(--primary);
+        }
+
+        /* Submit gradient capsule button */
+        .submit-btn {
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 800;
+            padding: 18px;
+            width: 100%;
+            border-radius: 50px; 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .submit-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(37, 99, 235, 0.35);
+        }
+
+        .submit-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Transitions groups */
+        .operational-only, .citizen-only {
+            max-height: 500px;
+            opacity: 1;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .operational-only.hidden, .citizen-only.hidden {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+            pointer-events: none;
+        }
+
+        /* Alert notifications */
+        .flash-messages {
+            margin-bottom: 20px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .flash-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <!-- Royal Blue Shield Icon Box -->
+        <div class="shield-icon-container">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <h2>Emergency Portal</h2>
+        <p class="subtitle">Every second counts. Access the emergency response network and active command center.</p>
+
+        <!-- Flash messages for auth errors -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class="flash-messages">
+              {% for category, message in messages %}
+                <li class="flash-message">
+                  <i class="fa-solid fa-triangle-exclamation"></i> {{ message }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        
+        <form action="/login/local" method="POST">
+            <!-- Hidden Role Input -->
+            <input type="hidden" name="role" id="role-input" value="fireman">
+
+            <!-- Type Selector (Connexion Pro vs Inscription Citoyen) -->
+            <div class="toggle-group">
+                <button type="button" class="toggle-btn active" data-type="operational" onclick="setLoginType('operational')">
+                    <i class="fa-solid fa-user-shield"></i> Connexion Pro
+                </button>
+                <button type="button" class="toggle-btn" data-type="citizen" onclick="setLoginType('citizen')">
+                    <i class="fa-solid fa-users"></i> Inscription Citoyen
+                </button>
+            </div>
+
+            <!-- Identity Selector (Only shown in Operational mode) -->
+            <div class="operational-only">
+                <label class="form-label">Identité Opérationnelle</label>
+                <div class="toggle-group">
+                    <button type="button" class="toggle-btn active" data-identity="fireman" onclick="setOperationalIdentity('fireman')">
+                        🧑‍🚒 Agent de Terrain
+                    </button>
+                    <button type="button" class="toggle-btn" data-identity="admin" onclick="setOperationalIdentity('admin')">
+                        👑 Contrôleur
+                    </button>
+                </div>
+            </div>
+
+            <!-- Citizen Only Fields (Name and Phone) -->
+            <div class="citizen-only hidden">
+                <div class="input-group">
+                    <label class="form-label">Nom complet *</label>
+                    <div class="input-wrapper">
+                        <input type="text" name="name" class="input-box" placeholder="Nom complet" id="citizen-name">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="form-label">Téléphone</label>
+                    <div class="input-wrapper">
+                        <input type="tel" name="phone" class="input-box" placeholder="0555 00 00 00" id="citizen-phone">
+                        <i class="fa-solid fa-phone"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email address -->
+            <div class="input-group">
+                <label class="form-label" id="email-label">Email Professionnel</label>
+                <div class="input-wrapper">
+                    <input type="email" name="email" class="input-box" required placeholder="fireman@firesafe.dz" value="fireman@firesafe.dz">
+                    <i class="fa-solid fa-envelope"></i>
+                </div>
+            </div>
+            
+            <!-- Security Keyphrase (Only shown in Operational mode) -->
+            <div class="input-group operational-only">
+                <label class="form-label">Phrase de Sécurité</label>
+                <div class="input-wrapper">
+                    <input type="password" name="keyphrase" class="input-box" placeholder="••••••••••••" value="super_secret_key">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+            </div>
+
+            <!-- Clearance required notice -->
+            <div class="clearance-warning operational-only" id="clearance-notice">
+                <i class="fa-solid fa-circle-info"></i> Autorisation opérationnelle requise pour le tableau de bord.
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn" id="submit-button">
+                LANCER LA CONSOLE &nbsp; <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Toggle Logic
+        let activeType = 'operational';
+        let activeIdentity = 'fireman';
+
+        function setLoginType(type) {
+            activeType = type;
+            
+            // Toggle active classes on buttons
+            document.querySelectorAll('[data-type]').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-type="${type}"]`).classList.add('active');
+
+            const opElements = document.querySelectorAll('.operational-only');
+            const citElements = document.querySelectorAll('.citizen-only');
+            const emailLabel = document.getElementById('email-label');
+            const emailInput = document.querySelector('input[type="email"]');
+            const roleInput = document.getElementById('role-input');
+            const submitBtn = document.getElementById('submit-button');
+            const nameInput = document.getElementById('citizen-name');
+
+            if (type === 'operational') {
+                // Show Operational Fields, Hide Citizen Fields
+                opElements.forEach(el => el.classList.remove('hidden'));
+                citElements.forEach(el => el.classList.add('hidden'));
+                nameInput.removeAttribute('required');
+                
+                emailLabel.textContent = 'Email Professionnel';
+                emailInput.placeholder = activeIdentity === 'admin' ? 'admin@firesafe.dz' : 'fireman@firesafe.dz';
+                emailInput.value = activeIdentity === 'admin' ? 'admin@firesafe.dz' : 'fireman@firesafe.dz';
+                roleInput.value = activeIdentity;
+                submitBtn.innerHTML = 'LANCER LA CONSOLE &nbsp; <i class="fa-solid fa-arrow-right"></i>';
+            } else {
+                // Hide Operational Fields, Show Citizen Fields
+                opElements.forEach(el => el.classList.add('hidden'));
+                citElements.forEach(el => el.classList.remove('hidden'));
+                nameInput.setAttribute('required', '');
+                
+                emailLabel.textContent = 'Email Citoyen';
+                emailInput.placeholder = 'you@domain.com';
+                if (emailInput.value === 'fireman@firesafe.dz' || emailInput.value === 'admin@firesafe.dz') {
+                    emailInput.value = '';
+                }
+                roleInput.value = 'citizen';
+                submitBtn.innerHTML = 'ACCÉDER À LA CARTE &nbsp; <i class="fa-solid fa-arrow-right"></i>';
+            }
+        }
+
+        function setOperationalIdentity(identity) {
+            activeIdentity = identity;
+            
+            // Toggle active classes on identity buttons
+            document.querySelectorAll('[data-identity]').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-identity="${identity}"]`).classList.add('active');
+
+            const emailInput = document.querySelector('input[type="email"]');
+            const roleInput = document.getElementById('role-input');
+
+            roleInput.value = identity;
+            if (identity === 'admin') {
+                emailInput.placeholder = 'admin@firesafe.dz';
+                if (emailInput.value === 'fireman@firesafe.dz') {
+                    emailInput.value = 'admin@firesafe.dz';
+                }
+            } else {
+                emailInput.placeholder = 'fireman@firesafe.dz';
+                if (emailInput.value === 'admin@firesafe.dz') {
+                    emailInput.value = 'fireman@firesafe.dz';
+                }
+            }
+        }
+    </script>
+</body>
+</html>

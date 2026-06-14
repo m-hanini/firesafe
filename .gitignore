@@ -1,0 +1,45 @@
+# Environment & secrets
+.env
+*.env.*
+!.env.example
+
+# Database files
+*.sqlite
+*.db
+*.sqlite3
+dss.db
+memoire_db.sqlite
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# Uploaded files (videos, images)
+static/uploads/
+
+# IDE & OS
+.vscode/
+.idea/
+*.code-workspace
+.DS_Store
+Thumbs.db
+
+# VS Code local history
+.history/
+
+# Logs
+*.log
+
+# Distribution / build
+dist/
+build/
+*.egg-info/

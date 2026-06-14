@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>معاينة التوزيع - Dispatch Preview</title>
+  <style>
+    body{font-family: Arial, Helvetica, sans-serif;direction:rtl;padding:20px;background:#0f1724;color:#e6eef8}
+    .card{background:#122034;padding:16px;border-radius:8px;margin-bottom:12px}
+    h1{color:#ffd166}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid #223144;text-align:right}
+    .muted{color:#9fb0c8}
+  </style>
+</head>
+<body>
+  <h1>معاينة توزيع الوحدات</h1>
+  <div class="card">
+    <div><strong>الموقع:</strong> {{ lat }}, {{ lng }}</div>
+    <div><strong>الحدة:</strong> {{ severity }}</div>
+    <div><strong>نوع المنطقة:</strong> {{ area_type }}</div>
+    <div><strong>شدة السيناريو:</strong> {{ scenario_intensity }}</div>
+    <div><strong>العدد المطلوب:</strong> {{ required_count }}</div>
+  </div>
+
+  <div class="card">
+    <h3>مجموعة التكتيك (المختارة قبل التشغيل)</h3>
+    {% if tactical_pool %}
+      <table>
+        <tr><th>وحدة</th><th>مركبة/معدات</th><th>المسافة (كم)</th><th>ETA (دقائق)</th></tr>
+        {% for u in tactical_pool %}
+          <tr>
+            <td>{{ u.unit_name or u.get('unit_name','-') }}</td>
+            <td>{{ u.type }}</td>
+            <td>{{ u.distance_km }}</td>
+            <td>{{ u.eta_minutes }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <div class="muted">لا توجد وحدات محلية؛ ستستخدم المرشحين العالميين.</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3>نتيجة NSGA-II</h3>
+    {% if nsga_result %}
+      <table>
+        <tr><th>وحدة</th><th>مركبة</th><th>المسافة (كم)</th><th>ETA (دقائق)</th></tr>
+        {% for d in nsga_result %}
+          <tr><td>{{ d.unit_name or d.get('unit_name','-') }}</td><td>{{ d.type }}</td><td>{{ d.distance_km }}</td><td>{{ d.eta_minutes }}</td></tr>
+        {% endfor %}
+      </table>
+    {% else %}<div class="muted">لا توجد نتيجة</div>{% endif %}
+  </div>
+
+  <div class="card">
+    <h3>نتيجة Hybrid GWO</h3>
+    {% if hybrid_result %}
+      <table>
+        <tr><th>وحدة</th><th>مركبة</th><th>المسافة (كم)</th><th>ETA (دقائق)</th></tr>
+        {% for d in hybrid_result %}
+          <tr><td>{{ d.unit_name or d.get('unit_name','-') }}</td><td>{{ d.type }}</td><td>{{ d.distance_km }}</td><td>{{ d.eta_minutes }}</td></tr>
+        {% endfor %}
+      </table>
+    {% else %}<div class="muted">لا توجد نتيجة</div>{% endif %}
+  </div>
+
+  <div class="card">
+    <h3>نتيجة IP (مُختصرة)</h3>
+    <div><strong>خطة (ملخّص):</strong></div>
+    <pre style="white-space:pre-wrap">{{ ip_res.output[:1000] }}</pre>
+    <div><strong>إجمالي الشاحنات:</strong> {{ ip_res.trucks }}, <strong>هيليكوبترات:</strong> {{ ip_res.helis }}, <strong>طائرات بدون طيار:</strong> {{ ip_res.drones }}</div>
+  </div>
+
+  <div class="card">
+    <h3>نتيجة GP (مُختصرة)</h3>
+    <div><pre style="white-space:pre-wrap">{{ gp_res.output[:800] }}</pre></div>
+    <div><strong>تقييم الاعتمادية:</strong> {{ gp_res.reliability }}</div>
+  </div>
+
+</body>
+</html>

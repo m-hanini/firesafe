@@ -1,0 +1,125 @@
+﻿{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Barrage Sidi Yacoub",
+        "type": "water_source",
+        "risk_level": "low"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [1.110, 36.100],
+            [1.150, 36.100],
+            [1.150, 36.140],
+            [1.110, 36.140],
+            [1.110, 36.100]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Barrage Oued Fodda",
+        "type": "water_source",
+        "risk_level": "low"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [1.510, 36.160],
+            [1.550, 36.160],
+            [1.550, 36.200],
+            [1.510, 36.200],
+            [1.510, 36.160]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Zone Humide (Oued Chlef)",
+        "type": "flood_zone",
+        "risk_level": "low"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [1.200, 36.150],
+            [1.400, 36.150],
+            [1.400, 36.180],
+            [1.200, 36.180],
+            [1.200, 36.150]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Dahra / Taougrite Forest",
+        "type": "forest_zone",
+        "risk_level": "high"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [1.000, 36.250],
+            [1.150, 36.250],
+            [1.150, 36.350],
+            [1.000, 36.350],
+            [1.000, 36.250]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Forets de l'Ouarsenis",
+        "type": "forest_zone",
+        "risk_level": "high"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [1.550, 35.850],
+            [1.800, 35.850],
+            [1.800, 35.950],
+            [1.550, 35.950],
+            [1.550, 35.850]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Beni Haoua Coastal Forest",
+        "type": "forest_zone",
+        "risk_level": "high"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [1.450, 36.500],
+            [1.650, 36.500],
+            [1.650, 36.560],
+            [1.450, 36.560],
+            [1.450, 36.500]
+          ]
+        ]
+      }
+    }
+  ]
+}
