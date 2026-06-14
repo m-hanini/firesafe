@@ -252,3 +252,9 @@ firesafe/
 ## License
 
 This project is released for academic demonstration purposes alongside the above paper submission.
+
+---
+
+## Screenshots
+
+See the consolidated screenshots and short descriptions in the project docs: [docs/screenshots.md](docs/screenshots.md)
