@@ -1,7 +1,5 @@
 # Project Screenshots
 
-This page collects the project's UI screenshots located in `docs/screenshots` with brief notes. Edit descriptions as needed.
-
 ---
 
 Below are the screenshots (ordered by filename). Click any image to view it full-size.
