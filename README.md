@@ -249,21 +249,6 @@ firesafe/
 
 ---
 
-## Citation
-
-If you use FireSafe in your research, please cite:
-
-```bibtex
-@inproceedings{firesafe2026,
-  title     = {FireSafe: An Interactive Decision-Support System for Real-Time Firefighting Resource Allocation},
-  author    = {Hanini, Maria and {others}},
-  booktitle = {Proceedings of [Conference Name]},
-  year      = {2026}
-}
-```
-
----
-
 ## License
 
 This project is released for academic demonstration purposes alongside the above paper submission.
